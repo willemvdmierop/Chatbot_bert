@@ -43,8 +43,8 @@ if (torch.cuda.is_available()):
 
 
 # Todo this implementation is for scibert
-tokenizer_scibert = AutoTokenizer.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
-model_scibert = BertForMaskedLM.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
+tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
+model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
 #print('scibert model', model_scibert)
 # return the list of OrderedDicts:
 # a total of 83097 dialogues
@@ -60,7 +60,7 @@ full_data = utils.create_dialogue_dataset()
 # f.close()
 #print("We load the vocab from the text file and get:")
 voc = [line.rstrip('\n') for line in
-       open("/Users/willemvandemierop/Documents/Master AI/Pycharm/DL Prediction/Coursework/vocab.txt")]
+       open("vocab.txt")]
 print(voc[5000:5010])
 voc_idx = OrderedDict()
 for idx, w in enumerate(voc):
@@ -104,10 +104,6 @@ for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
 
-device = 'cpu'
-if device == 'cuda':
-    device = 'cuda'
-
 model.to(device)
 #forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
@@ -133,10 +129,10 @@ for epoch in range(epochs):
         # number of tokens in a sequence 
         seq_length = len(X[1][0]['input_ids'].squeeze())
         total_phrase_pairs += batch_size
-        input_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
-        token_id_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
-        attention_mask_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
-        lm_labels_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
+        input_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
+        token_id_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
+        attention_mask_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
+        lm_labels_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
         for i in range(batch_size):
             input_tensor[i] = X[1][i]['input_ids'].squeeze()
             token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
@@ -153,6 +149,7 @@ for epoch in range(epochs):
         optimizer.zero_grad()
     average_loss = total_loss/len(dataset)
     loss_list.append(average_loss)
+    torch.save(model, 'bertbot.pth')
     print("average loss '{}' and train time '{}'".format(average_loss,(time.time()-t0)))
 
 

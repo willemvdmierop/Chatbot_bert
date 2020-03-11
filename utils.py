@@ -1,6 +1,6 @@
 import os, sys, re
-import tkinter as tk
-import codecs
+#import tkinter as tk
+#import codecs
 from collections import OrderedDict
 
 
