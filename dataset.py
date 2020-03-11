@@ -10,14 +10,14 @@ class MoviePhrasesData(data.Dataset):
 
     # voc: vocabulary, word:idx
     # all dialogues:
-    def __init__(self, voc, all_dialogues, max_seq_len = 40, unk_token = '<UNK>', start_token = '<S>', end_token = '</S>', sep_token = '<SEP>'):
+    def __init__(self, all_dialogues, max_seq_len = 40, unk_token = '<UNK>', start_token = '<S>', end_token = '</S>', sep_token = '<SEP>'):
         # why init superclass? access methods from data.Dataset
         # no need to rewrite methods from the superclass
         # first argument: subclass, second: instance of a subclass
         # in Python3 this is equivalent to super()
         super(MoviePhrasesData, self).__init__()
         self.max_seq_len = max_seq_len
-        self.voc = voc
+        #self.voc = voc
         self.all_dialogues = all_dialogues
         self.unk_token = unk_token
         self.end_token = end_token
