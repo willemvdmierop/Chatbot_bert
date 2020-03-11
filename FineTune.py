@@ -32,7 +32,7 @@ voc = []
 OOV = '<UNK>'
 START_TOKEN = "<S>"
 END_TOKEN = "</S>"
-max_phrase_length = 20
+max_phrase_length = 40
 minibatch_size = 1
 
 device = 'cpu'
@@ -74,7 +74,7 @@ print(96 * '#')
 
 def load_data(**train_pars):
     stage = train_pars['stage']
-    data = dataset.MoviePhrasesData(max_phrase_length, voc_idx, full_data, OOV, START_TOKEN, END_TOKEN)
+    data = dataset.MoviePhrasesData(voc_idx, full_data, max_phrase_length)
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
@@ -84,10 +84,10 @@ load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataset = load_data(**load_data_pars) #this returns a dataloader
 print('\n' + 40 * '#',"Now FineTuning", 40 * '#')
 # Load the BERT tokenizer.
-print('Loading BERT tokenizer...')
-
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+print('Loading BERT model...')
+#tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+
 
 params = list(model.named_parameters())
 
@@ -128,17 +128,25 @@ for epoch in range(epochs):
         model.zero_grad()
         # number of phrases
         # X[0] is just the index
-        # X[1] is the dialogue, X[1][0] are input phrases, X[1][1] are output phrases
-        batch_size = X[1][0].size()[1]
+        # X[1] is the dialogue, X[1][0] are input phrases
+        batch_size = len(X[1])
         # number of tokens in a sequence 
-        seq_length = X[1][0].size()[2]
+        seq_length = len(X[1][0]['input_ids'].squeeze())
         total_phrase_pairs += batch_size
+        input_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
+        token_id_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
+        attention_mask_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
+        lm_labels_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long)
+        for i in range(batch_size):
+            input_tensor[i] = X[1][i]['input_ids'].squeeze()
+            token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
+            attention_mask_tensor[i] = X[1][i]['attention_mask'].squeeze()
+            lm_labels_tensor[i] = X[1][i]['lm_labels'].squeeze()
 
-        input_data = X[1][0]
-        input_data = input_data.view(-1, batch_size, seq_length)[0]
-        outputs = model(inputs_ids)
 
-        loss = outputs[1]
+        outputs = model(input_ids = input_tensor, attention_mask = attention_mask_tensor, token_type_ids = token_id_tensor, lm_labels= lm_labels_tensor)
+
+        loss = outputs[0]
         total_loss += loss
         loss.backward()
         optimizer.step()

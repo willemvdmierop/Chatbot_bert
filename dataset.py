@@ -23,7 +23,7 @@ class MoviePhrasesData(data.Dataset):
         self.end_token = end_token
         self.start_token = start_token
         self.sep_token = sep_token
-
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     # loads one full dialogue (K phrases in a dialogue), an OrderedDict
     # If there are a total K phrases, the data point will be
     # ((K-1) x (MAX_SEQ + 2), (K-1) x (MAX_SEQ + 2))
@@ -36,7 +36,7 @@ class MoviePhrasesData(data.Dataset):
         # get keys (first phrase) from the dialogues
         keys = dial.keys()
 
-        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        tokenizer = self.tokenizer
 
         for k in keys:
             input_phrase = []
@@ -65,12 +65,12 @@ class MoviePhrasesData(data.Dataset):
                         'return_attention_mask': True,
                         'return_special_tokens_mask': True}
             input_phrase = tokenizer.encode_plus(**kwargs)
-            lm_labels = -100*input_phrase['attention_mask']
-            input_phrase['lm_labels']  = lm_labels
+            lm_labels = -100*(input_phrase['attention_mask'] - input_phrase['token_type_ids'])
+            input_phrase['lm_labels'] = lm_labels
 
-            all_inputs.append(torch.tensor(input_phrase))
+            all_inputs.append(input_phrase)
 
-        all_inputs = torch.stack(all_inputs)
+        #all_inputs = torch.stack(all_inputs)
 
         return all_inputs
 
