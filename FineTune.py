@@ -43,8 +43,8 @@ if (torch.cuda.is_available()):
 
 
 # Todo this implementation is for scibert
-tokenizer_scibert = AutoTokenizer.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
-model_scibert = BertForMaskedLM.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
+#tokenizer_scibert = AutoTokenizer.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
+#model_scibert = BertForMaskedLM.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
 #print('scibert model', model_scibert)
 # return the list of OrderedDicts:
 # a total of 83097 dialogues
@@ -60,7 +60,7 @@ full_data = utils.create_dialogue_dataset()
 # f.close()
 #print("We load the vocab from the text file and get:")
 voc = [line.rstrip('\n') for line in
-       open("/Users/willemvandemierop/Documents/Master AI/Pycharm/DL Prediction/Coursework/vocab.txt")]
+       open("vocab.txt")]
 print(voc[5000:5010])
 voc_idx = OrderedDict()
 for idx, w in enumerate(voc):
@@ -93,13 +93,13 @@ params = list(model.named_parameters())
 
 print('The BERT model has {:} different named parameters.\n'.format(len(params)))
 
-print('==== Embedding Layer ====\n')
+print('======= Embedding Layer =======\n')
 for p in params[0:5]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-print('\n==== First Transformer ====\n')
+print('\n======= First Transformer =======\n')
 for p in params[5:21]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-print('\n==== Output Layer ====\n')
+print('\n======= Output Layer =======\n')
 for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
@@ -121,9 +121,11 @@ epochs = 1
 loss_list = []
 for epoch in range(epochs):
     t0 = time.time()
-    print('======== Training =======')
+    print(30 * "#" + ' Training ' + 30 * "#")
     print('======== Epoch {:} / {:} ========'.format(epoch + 1, epochs))
     total_loss = 0
+    counter = 0
+    print("length of dataset: ", len(dataset))
     for idx, X in enumerate(dataset):
         model.zero_grad()
         # number of phrases
@@ -151,9 +153,14 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+        counter += 1
+        if counter % 200:
+            print("*", end = '')
+            
     average_loss = total_loss/len(dataset)
     loss_list.append(average_loss)
     print("average loss '{}' and train time '{}'".format(average_loss,(time.time()-t0)))
 
-
+torch.save(model, "chatbot.pth")
+print(model.get_output_embeddings())
 

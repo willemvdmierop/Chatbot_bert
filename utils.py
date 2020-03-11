@@ -1,6 +1,4 @@
 import os, sys, re
-import tkinter as tk
-import codecs
 from collections import OrderedDict
 
 
@@ -19,7 +17,7 @@ def create_phrases_dict(l):
     return phrases
 
 
-loaded_lines = load_lines(os.path.join("cornell movie-dialogs corpus", "movie_lines.txt"))
+loaded_lines = load_lines( "movie_lines.txt")
 all_lines = create_phrases_dict(loaded_lines)
 
 
@@ -38,7 +36,7 @@ def create_dialogue_dataset():
     movie_lines = loaded_lines
     all_movie_lines = all_lines
     # this file contains indices of the phrases
-    movie_dialogues = load_dialogues(os.path.join("cornell movie-dialogs corpus", "movie_conversations.txt"))
+    movie_dialogues = load_dialogues("movie_conversations.txt")
     # this list will contain all oredered dicts
     full_list = []
     for idx, dialogue in enumerate(movie_dialogues):
