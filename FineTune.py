@@ -103,6 +103,7 @@ epochs = 1
 for epoch in range(epochs):
     for idx, val in enumerate(dataset):
         data = val[0][1]
+        print("gittest")
         tokenized = tokenizer.tokenize((val))
 
 
