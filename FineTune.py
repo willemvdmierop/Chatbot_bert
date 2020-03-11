@@ -4,8 +4,6 @@ import torch
 import torchvision
 # import nltk
 # import pandas
-# Sentiment analysys
-# Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng, and Christopher Potts. (2011)
 # from nltk.corpus import stopwords
 # from nltk.tokenize import word_tokenize
 # pytorch layers
@@ -39,9 +37,6 @@ device = 'cpu'
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
-
-
-
 # Todo this implementation is for scibert
 tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
 model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
@@ -59,12 +54,12 @@ full_data = utils.create_dialogue_dataset()
 #    f.write(i + '\n')
 # f.close()
 #print("We load the vocab from the text file and get:")
-voc = [line.rstrip('\n') for line in
-       open("vocab.txt")]
-print(voc[5000:5010])
-voc_idx = OrderedDict()
-for idx, w in enumerate(voc):
-    voc_idx[w] = idx
+#voc = [line.rstrip('\n') for line in
+#       open("vocab.txt")]
+#print(voc[5000:5010])
+#voc_idx = OrderedDict()
+#for idx, w in enumerate(voc):
+#    voc_idx[w] = idx
 
 end = time.time()
 print("\n"+96 * '#')
@@ -74,7 +69,7 @@ print(96 * '#')
 
 def load_data(**train_pars):
     stage = train_pars['stage']
-    data = dataset.MoviePhrasesData(voc_idx, full_data, max_phrase_length)
+    data = dataset.MoviePhrasesData(full_data)
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
