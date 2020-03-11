@@ -49,8 +49,10 @@ def create_dialogue_dataset():
         this_dialogue = OrderedDict()
         # ph are like 'L19043' taken from the lines data
         for id, ph in enumerate(phrases[:-1]):
-            this_dialogue[all_movie_lines[ph]] = all_movie_lines[phrases[id + 1]]
-        full_list.append(this_dialogue)
+            this_dialogue[all_movie_lines[ph]] = all_movie_lines[phrases[id + 1]] ##old code
+            #this_dialogue[ph, phrases[id+1]] = all_movie_lines[phrases[id+2]]
+        #if len(this_dialogue) != 0:    
+        full_list.append(this_dialogue)   
 
     return full_list
 
@@ -69,3 +71,4 @@ def create_vocab():
                 vocab.append(w)
 
     return sorted(vocab)
+
