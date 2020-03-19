@@ -20,6 +20,7 @@ from transformers import BertTokenizer
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
 from transformers import AutoModelWithLMHead, AutoTokenizer
 from transformers import AdamW
+from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
 import utils
 import dataset
@@ -98,7 +99,7 @@ print('\n======= Output Layer =======\n')
 for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
-
+tb = SummaryWriter()
 model.to(device)
 #forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
@@ -145,14 +146,16 @@ for epoch in range(epochs):
         optimizer.step()
         optimizer.zero_grad()
         counter += 1
-        if counter % 200:
+        tb.add_scalar('Loss Bert model', loss, epoch)
+        if counter % 4000:
             print("*", end = '')
             
     average_loss = total_loss/len(dataset)
     loss_list.append(average_loss)
-    torch.save(model, 'bertbot.pth')
+    model.save_pretrained("./my_saved_model_directory/")
     print("average loss '{}' and train time '{}'".format(average_loss,(time.time()-t0)))
 
-torch.save(model, "chatbot.pth")
+tb.close()
+model.save_pretrained('./my_saved_model_directory_final/')
 print(model.get_output_embeddings())
 

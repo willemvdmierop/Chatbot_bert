@@ -17,7 +17,7 @@ def create_phrases_dict(l):
     return phrases
 
 
-loaded_lines = load_lines( "movie_lines.txt")
+loaded_lines = load_lines("movie_lines.txt")
 all_lines = create_phrases_dict(loaded_lines)
 
 
