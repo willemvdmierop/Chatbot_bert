@@ -39,8 +39,8 @@ if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
 # Todo this implementation is for scibert
-tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
-model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
+#tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
+#model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
 #print('scibert model', model_scibert)
 # return the list of OrderedDicts:
 # a total of 83097 dialogues
@@ -106,7 +106,11 @@ model.to(device)
 lrate = 1e-6
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
 optimizer = AdamW(model.parameters(), **optim_pars)
-
+wd = os.getcwd()
+if not os.path.exists(wd + "/my_saved_model_directory"):
+	os.mkdir(wd + "/my_saved_model_directory")
+if not os.path.exists(wd + "/my_saved_model_director_final"):
+	os.mkdir(wd + "/my_saved_model_directory_final")
 current_batch = 0
 total_phrase_pairs = 0
 epochs = 1
@@ -146,16 +150,16 @@ for epoch in range(epochs):
         optimizer.step()
         optimizer.zero_grad()
         counter += 1
-        tb.add_scalar('Loss Bert model', loss, epoch)
+        tb.add_scalar('Loss_Bert_model', loss, epoch)
         if counter % 4000:
             print("*", end = '')
             
     average_loss = total_loss/len(dataset)
     loss_list.append(average_loss)
-    model.save_pretrained("./my_saved_model_directory/")
+    model.save_pretrained(wd + "/my_saved_model_directory/")
     print("average loss '{}' and train time '{}'".format(average_loss,(time.time()-t0)))
 
 tb.close()
-model.save_pretrained('./my_saved_model_directory_final/')
+model.save_pretrained(wd + "/my_saved_model_directory_final/")
 print(model.get_output_embeddings())
 
