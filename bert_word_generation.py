@@ -98,22 +98,19 @@ PAD, MASK, CLS, SEP = '[PAD]', '[MASK]', '[CLS]', '[SEP]'
 
 
 def tokenize_batch(batch):
-    return [tokenizer.convert_tokens_to_ids(sent) for sent in batch]
-
+  return [tokenizer.convert_tokens_to_ids(sent) for sent in batch]
 
 def untokenize_batch(batch):
-    return [tokenizer.convert_ids_to_tokens(sent) for sent in batch]
-
+  return [tokenizer.convert_ids_to_tokens(sent) for sent in batch]
 
 def detokenize(sent):
-    new_sent = []
-    for i, token in enumerate(sent):
-        if token.startswith("##"):
-            new_sent[len(new_sent) - 1] = new_sent[len(new_sent) - 1] + token[2:]
-        else:
-            new_sent.append(token)
-    return new_sent
-
+  new_sent = []
+  for i, token in enumerate(sent):
+    if token.startswith("##"):
+      new_sent[len(new_sent) - 1] = new_sent[len(new_sent) - 1] + token[2:]
+    else:
+      new_sent.append(token)
+  return new_sent
 
 CLS = '[CLS]'
 SEP = '[SEP]'
@@ -125,17 +122,17 @@ cls_id = tokenizer.convert_tokens_to_ids([CLS])[0]
 
 def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_list=True):
     """ Generate a word from from out[gen_idx]
-    
-    args:
-        - out (torch.Tensor): tensor of logits of size batch_size x seq_len x vocab_size
-        - gen_idx (int): location for which to generate for
-        - top_k (int): if >0, only sample from the top k most probable words
-        - sample (Bool): if True, sample from full distribution. Overridden by top_k
 
-    - explanation of tempereture:
-    https://towardsdatascience.com/how-to-sample-from-language-models-682bceb97277
+      args:
+          - out (torch.Tensor): tensor of logits of size batch_size x seq_len x vocab_size
+          - gen_idx (int): location for which to generate for
+          - top_k (int): if >0, only sample from the top k most probable words
+          - sample (Bool): if True, sample from full distribution. Overridden by top_k
 
-  """
+      - explanation of tempereture:
+      https://towardsdatascience.com/how-to-sample-from-language-models-682bceb97277
+
+    """
     # print(out.shape)
     logits = out[:, gen_idx]
     if temperature is not None:
@@ -159,27 +156,26 @@ def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
     return tokenize_batch(batch)
 
 
-def printer(sent, should_detokenize=True):
+def printer(sent, should_detokenize=True, length_question=1):
     if should_detokenize:
-        sent = detokenize(sent)[1:-1]  # [CLS] and [SEP] don't need to be detokenized
+        sent = detokenize(sent)[length_question:-1]  # [CLS] and [SEP] don't need to be detokenized
     print(" ".join(sent))
 
+def sequential_generation(seed_text, batch_size = 10, max_len = 15, leed_out_len = 15,
+                          top_k = 0, temperature = None, sample = True, cuda = True):
+  seed_len = len(seed_text)
+  batch = get_init_text(seed_text, max_len, batch_size)
 
-def sequential_generation(seed_text, batch_size=10, max_len=15, leed_out_len=15,
-                          top_k=0, temperature=None, sample=True, cuda=True):
-    seed_len = len(seed_text)
-    batch = get_init_text(seed_text, max_len, batch_size)
+  for i in range(max_len):
+    input_text = [sent[:seed_len + i + leed_out_len]+[sep_id] for sent in batch]
+    input_text = torch.tensor(batch).cuda() if cuda else torch.tensor(batch)
+    output_model = model(input_text)
+    output_model = output_model[0].detach()
+    idxs = generate_step(output_model, gen_idx = seed_len + i, top_k = top_k, temperature = temperature, sample = sample)
+    for j in range(batch_size):
+      batch[j][seed_len+i] = idxs[j]
 
-    for i in range(max_len):
-        input_text = [sent[:seed_len + i + leed_out_len] + [sep_id] for sent in batch]
-        input_text = torch.tensor(batch).cuda() if cuda else torch.tensor(batch)
-        output_model = model(input_text)
-        output_model = output_model[0].detach()
-        idxs = generate_step(output_model, gen_idx=seed_len + i, top_k=top_k, temperature=temperature, sample=sample)
-        for j in range(batch_size):
-            batch[j][seed_len + i] = idxs[j]
-
-    return untokenize_batch(batch)
+  return untokenize_batch(batch)
 
 
 def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
@@ -193,11 +189,10 @@ def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
                                       cuda=cuda)
 
         if (batch_n + 1) % print_every == 0:
-            print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
+            # print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
             start_time = time.time()
         sentences += batch
     return sentences
-
 
 """We're finally going to use the generation function: 
 
@@ -208,40 +203,70 @@ def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
 4.   seed_text(["CLS"]): prefix to generate for. we start with this as a test later text needs to be added for bot.
 """
 
-n_samples = 5
-batch_size = 5
+n_samples = 1
+batch_size = 1
 max_len = 10
 top_k = 100
 temperature = 1.0
-leed_out_len = 5  # max_len
+leed_out_len = 5 # max_len
 sample = True
 max_iter = 500
 cuda = False
 if (torch.cuda.is_available()):
-    cuda = True
+  cuda = True
 
 test = "[CLS]".split()
-print(test)
-
 # Choose the prefix context
-seed_text = input('\nEnter your Question here: ').strip()
-print(seed_text)
-seed_text = seed_text.split()
-print(seed_text)
+seed_text = test
 bert_sents = generate_text(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
-                           sample=sample, top_k=top_k, temperature=temperature, cuda=cuda)
+                      sample=sample, top_k=top_k, temperature=temperature, cuda=cuda)
 
 for sent in bert_sents:
-    printer(sent, should_detokenize=True)
+  printer(sent, should_detokenize=True)
 
 question = 1
 while question < 4:
-    print("\nyou can ask us 3 questions this is your '{}' sentence".format(question))
-    seed_text = input('\nEnter your Question here: ').strip()
-    seed_text = seed_text.split()
-    bert_sents = generate_text(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
-                               sample=sample, top_k=top_k, temperature=temperature, cuda=cuda)
-    for sent in bert_sents:
-        printer(sent, should_detokenize=True)
+  print("\nyou can ask us 3 questions this is your '{}' sentence".format(question))
+  seed_text = input('\nEnter your Question here: ').strip()
+  seed_text = seed_text.split()
+  seed_len = len(seed_text)
+  bert_sents = generate_text(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
+                      sample=sample, top_k=top_k, temperature=temperature, cuda=cuda)
+  for sent in bert_sents:
+    printer(sent, should_detokenize=True, length_question = seed_len)
 
-    question += 1
+  question += 1
+
+from collections import Counter
+from nltk.util import ngrams
+from nltk.translate import bleu_score as bleu
+
+
+def self_bleu(sents):
+    return bleu.corpus_bleu([[s for (j, s) in enumerate(sents) if j != i] for i in range(len(sents))], sents)
+
+
+def get_ngram_counts(sents, max_n=4):
+    size2count = {}
+    for i in range(1, max_n + 1):
+        size2count[i] = Counter([n for sent in sents for n in ngrams(sent, i)])
+    return size2count
+
+
+def self_unique_ngrams(preds, max_n=4):
+    # get # of pred ngrams with count 1
+    pct_unique = {}
+    pred_ngrams = get_ngram_counts(preds, max_n)
+    for i in range(1, max_n + 1):
+        n_unique = len([k for k, v in pred_ngrams[i].items() if v == 1])
+        total = sum(pred_ngrams[i].values())
+        pct_unique[i] = n_unique / total
+    return pct_unique
+
+model_version = "our model"
+max_n = 4
+print("BERT %s self-BLEU: %.2f" % (model_version, 100 * self_bleu(bert_sents)))
+
+pct_uniques = self_unique_ngrams(bert_sents, max_n)
+for i in range(1, max_n + 1):
+    print("BERT %s unique %d-grams relative to self: %.2f" % (model_version, i, 100 * pct_uniques[i]))
