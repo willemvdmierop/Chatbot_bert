@@ -1,45 +1,47 @@
 from tkinter import *
+from PIL import Image, ImageTk
 
 root = Tk()
 root.title("Chatbot BERT")
-
-e = Entry(root, width = 50, borderwidth = 5)
-e.grid(row = 0, column = 0, columnspan = 3, padx = 10, pady = 10)
-
-def button_click(number):
-    e.delete(0,END)
-    e.insert(0,number)
-
-button_1 = Button(root, text = "1", padx = 40, pady = 20, command = lambda: button_click(1))
-button_2 = Button(root, text = "2", padx = 40, pady = 20, command = lambda: button_click(2))
-button_3 = Button(root, text = "3", padx = 40, pady = 20, command = lambda: button_click(3))
-button_4 = Button(root, text = "4", padx = 40, pady = 20, command = lambda: button_click(4))
-button_5 = Button(root, text = "5", padx = 40, pady = 20, command = lambda: button_click(5))
-button_6 = Button(root, text = "6", padx = 40, pady = 20, command = lambda: button_click(6))
-button_7 = Button(root, text = "7", padx = 40, pady = 20, command = lambda: button_click(7))
-button_8 = Button(root, text = "8", padx = 40, pady = 20, command = lambda: button_click(8))
-button_9 = Button(root, text = "9", padx = 40, pady = 20, command = lambda: button_click(9))
-button_0 = Button(root, text = "0", padx = 40, pady = 20, command = lambda: button_click(0))
-button_add = Button(root, text = "+", padx = 39, pady = 20, command = lambda: button_click(0))
-button_equal = Button(root, text = "=", padx = 91, pady = 20, command = lambda: button_click(0))
-button_clear = Button(root, text = "clear", padx = 71, pady = 20, command = lambda: button_click(0))
-
-button_1.grid(row = 3,column = 0)
-button_2.grid(row = 3,column = 1)
-button_3.grid(row = 3,column = 2)
-
-button_4.grid(row = 2,column = 0)
-button_5.grid(row = 2,column = 1)
-button_6.grid(row = 2,column = 2)
-
-button_7.grid(row = 1,column = 0)
-button_8.grid(row = 1,column = 1)
-button_9.grid(row = 1,column = 2)
-button_0.grid(row = 4,column = 0)
-
-button_clear.grid(row = 6, column= 0, columnspan = 2)
-button_add.grid(row = 5, column= 0)
-button_equal.grid(row =5, column=1 ,columnspan = 2)
+HEIGHT = 700
+WIDTH = 800
+canvas = Canvas(root, height=HEIGHT, width=WIDTH)
+canvas.pack()
 
 
+img = ImageTk.PhotoImage(Image.open("/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/City_logo.jpg"))
+root.iconphoto(False, img)
+background_label = Label(root, image=img)
+background_label.place(x=0, y=0, relheight=1, relwidth=1)
+
+label = Label(root, text = "This is a chatbot made from bert, pls enter a question below", font=("Arial Bold", 25))
+label.place(x = 50, y = 25)
+
+# this input needs to be passed to the chatbot
+def Enter():
+    input = entry.get()
+    output_txt = "Hello " + str(input) + " you sound like a smart man that knows a lot about AI"
+    label = Label(output_frame, text=output_txt, font=40, bg="#00d2ff")
+    label.place(relx=0.2, rely=0.35)
+
+# this creates the box for where we input text
+input_frame = Frame(root, bg='gray', bd=5)
+input_frame.place(relx=0.5, rely=0.1, relwidth=0.75, relheight=0.1, anchor="n")
+# entry of the text
+entry = Entry(input_frame, font=40)
+entry.place(relwidth=0.65, relheight=1)
+# Enter button
+button = Button(input_frame, text="Enter", font=40, command= Enter)
+button.place(relx=0.68, relheight=1, relwidth=0.3)
+# this creates the output frame for the answer of the chatbot
+output_frame = Frame(root, bg="#98f5ff")
+output_frame.place(relx=0.5, rely=0.22, relwidth=0.75, relheight=0.1, anchor="n")
+
+label = Label(output_frame, text="Answer Bot: ", font=40, bg="#00d2ff")
+label.place(relx=0.05, rely=0.35)
+
+
+# button to quit the program
+button_quit = Button(root, text = "Stop talking to chatbot", command = root.quit, font = ("Arial Bold", 15), padx = 30, pady = 30)
+button_quit.place(x = 285, y = 620)
 root.mainloop()
