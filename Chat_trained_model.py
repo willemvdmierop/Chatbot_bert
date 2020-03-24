@@ -34,7 +34,7 @@ END_TOKEN = "</S>"
 max_phrase_length = 40
 minibatch_size = 1
 
-device = 'cpu'
+device = torch.device('cpu')
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
@@ -67,8 +67,8 @@ print('\n' + 40 * '#',"Now FineTuning", 40 * '#')
 print('Loading BERT model...')
 #tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-weights = torch.load("/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/chatbot.pth", map_location= 'cpu')
-model = BertForMaskedLM.from_pretrained("/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/bertbot.pth")
+weights = torch.load("./chatbot.pth", map_location= device) 
+model = BertForMaskedLM.from_pretrained("./bertbot.pth")
 
 
 params = list(model.named_parameters())

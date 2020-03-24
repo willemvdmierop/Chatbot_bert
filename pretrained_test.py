@@ -16,9 +16,11 @@ resulting_string = tokenizer.decode(generated.tolist()[0])
 print(resulting_string)
 '''
 
-tokenizer_scibert = AutoTokenizer.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
-model_scibert = AutoModelForQuestionAnswering.from_pretrained("/Users/willemvandemierop/Google Drive/DL Prediction (706)/scibert_scivocab_uncased")
+#tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
+#model_scibert = AutoModelForQuestionAnswering.from_pretrained("./scibert_scivocab_uncased")
 
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+model = AutoModelForQuestionAnswering.from_pretrained('bert-base-uncased')
 
 text = r"""
 🤗 Transformers (formerly known as pytorch-transformers and pytorch-pretrained-bert) provides general-purpose
@@ -34,18 +36,18 @@ questions = [
 ]
 
 for question in questions:
-    inputs = tokenizer_scibert.encode_plus(question, text, add_special_tokens=True, return_tensors="pt")
+    inputs = tokenizer.encode_plus(question, text, add_special_tokens=True, return_tensors="pt")
     input_ids = inputs["input_ids"].tolist()[0]
 
-    text_tokens = tokenizer_scibert.convert_ids_to_tokens(input_ids)
-    answer_start_scores, answer_end_scores = model_scibert(**inputs)
+    text_tokens = tokenizer.convert_ids_to_tokens(input_ids)
+    answer_start_scores, answer_end_scores = model(**inputs)
 
     answer_start = torch.argmax(
         answer_start_scores
     )  # Get the most likely beginning of answer with the argmax of the score
     answer_end = torch.argmax(answer_end_scores) + 1  # Get the most likely end of answer with the argmax of the score
 
-    answer = tokenizer_scibert.convert_tokens_to_string(tokenizer_scibert.convert_ids_to_tokens(input_ids[answer_start:answer_end]))
+    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[answer_start:answer_end]))
 
     print(f"Question: {question}")
     print(f"Answer: {answer}\n")
