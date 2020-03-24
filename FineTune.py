@@ -39,34 +39,35 @@ if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
 # Todo this implementation is for scibert
-#tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
-#model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
-#print('scibert model', model_scibert)
+# tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
+# model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
+# print('scibert model', model_scibert)
 # return the list of OrderedDicts:
 # a total of 83097 dialogues
 full_data = utils.create_dialogue_dataset()
 
-#voc = utils.create_vocab()
-#voc.append(OOV)
-#voc.append(START_TOKEN)
-#voc.append(END_TOKEN)
-#f = open("vocab.txt","w+")
+# voc = utils.create_vocab()
+# voc.append(OOV)
+# voc.append(START_TOKEN)
+# voc.append(END_TOKEN)
+# f = open("vocab.txt","w+")
 # for i in voc:
 #    f.write(i + '\n')
 # f.close()
-#print("We load the vocab from the text file and get:")
-#voc = [line.rstrip('\n') for line in
+# print("We load the vocab from the text file and get:")
+# voc = [line.rstrip('\n') for line in
 #       open("vocab.txt")]
-#print(voc[5000:5010])
-#voc_idx = OrderedDict()
-#for idx, w in enumerate(voc):
+# print(voc[5000:5010])
+# voc_idx = OrderedDict()
+# for idx, w in enumerate(voc):
 #    voc_idx[w] = idx
 
 end = time.time()
-print("\n"+96 * '#')
+print("\n" + 96 * '#')
 print(
     'Total data preprocessing time is {0:.2f} and the length of the vocabulary is {1:d}'.format(end - start, len(voc)))
 print(96 * '#')
+
 
 def load_data(**train_pars):
     stage = train_pars['stage']
@@ -77,13 +78,12 @@ def load_data(**train_pars):
 
 
 load_data_pars = {'stage': 'train', 'num_workers': 3}
-dataset = load_data(**load_data_pars) #this returns a dataloader
-print('\n' + 40 * '#',"Now FineTuning", 40 * '#')
+dataset = load_data(**load_data_pars)  # this returns a dataloader
+print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
 # Load the BERT tokenizer.
 print('Loading BERT model...')
-#tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 model = BertForMaskedLM.from_pretrained('bert-base-uncased')
-
 
 params = list(model.named_parameters())
 
@@ -101,16 +101,16 @@ for p in params[-4:]:
 
 tb = SummaryWriter()
 model.to(device)
-#forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
+# forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
 lrate = 1e-6
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
 optimizer = AdamW(model.parameters(), **optim_pars)
 wd = os.getcwd()
 if not os.path.exists(wd + "/my_saved_model_directory"):
-	os.mkdir(wd + "/my_saved_model_directory")
-if not os.path.exists(wd + "/my_saved_model_director_final"):
-	os.mkdir(wd + "/my_saved_model_directory_final")
+    os.mkdir(wd + "/my_saved_model_directory")
+if not os.path.exists(wd + "/my_saved_model_directory_final"):
+    os.mkdir(wd + "/my_saved_model_directory_final")
 current_batch = 0
 total_phrase_pairs = 0
 epochs = 1
@@ -131,18 +131,18 @@ for epoch in range(epochs):
         # number of tokens in a sequence 
         seq_length = len(X[1][0]['input_ids'].squeeze())
         total_phrase_pairs += batch_size
-        input_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
-        token_id_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
-        attention_mask_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
-        lm_labels_tensor = torch.zeros((batch_size,seq_length), dtype = torch.long).to(device)
+        input_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
+        token_id_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
+        attention_mask_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
+        masked_lm_labels_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         for i in range(batch_size):
             input_tensor[i] = X[1][i]['input_ids'].squeeze()
             token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
             attention_mask_tensor[i] = X[1][i]['attention_mask'].squeeze()
-            lm_labels_tensor[i] = X[1][i]['lm_labels'].squeeze()
+            masked_lm_labels_tensor[i] = X[1][i]['masked_lm_labels'].squeeze()
 
-
-        outputs = model(input_ids = input_tensor, attention_mask = attention_mask_tensor, token_type_ids = token_id_tensor, lm_labels= lm_labels_tensor)
+        outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
+                        masked_lm_labels=masked_lm_labels_tensor)
 
         loss = outputs[0]
         total_loss += loss
@@ -152,14 +152,13 @@ for epoch in range(epochs):
         counter += 1
         tb.add_scalar('Loss_Bert_model', loss, epoch)
         if counter % 4000:
-            print("*", end = '')
-            
-    average_loss = total_loss/len(dataset)
+            print("*", end='')
+
+    average_loss = total_loss / len(dataset)
     loss_list.append(average_loss)
     model.save_pretrained(wd + "/my_saved_model_directory/")
-    print("average loss '{}' and train time '{}'".format(average_loss,(time.time()-t0)))
+    print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()
 model.save_pretrained(wd + "/my_saved_model_directory_final/")
 print(model.get_output_embeddings())
-
