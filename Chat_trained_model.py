@@ -35,7 +35,7 @@ END_TOKEN = "</S>"
 max_phrase_length = 40
 minibatch_size = 1
 
-device = 'cpu'
+device = torch.device('cpu')
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
@@ -67,7 +67,10 @@ dataset = load_data(**load_data_pars)  # this returns a dataloader
 print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
 # Load the BERT tokenizer.
 print('Loading BERT model...')
+
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+#tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 model = BertForMaskedLM.from_pretrained(
