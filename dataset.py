@@ -65,7 +65,7 @@ class MoviePhrasesData(data.Dataset):
                         'return_attention_mask': True,
                         'return_special_tokens_mask': True}
             input_phrase = tokenizer.encode_plus(**kwargs)
-            masked_lm_labels = -100*(input_phrase['attention_mask'] - input_phrase['token_type_ids'])
+            masked_lm_labels = -100*(torch.ones(self.max_seq_len)- input_phrase['token_type_ids'])
             input_phrase['masked_lm_labels'] = masked_lm_labels
 
             all_inputs.append(input_phrase)
