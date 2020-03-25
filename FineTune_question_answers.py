@@ -70,11 +70,11 @@ print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
 # Load the BERT tokenizer.
 print('Loading BERT model...')
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
 
-params = list(model.named_parameters())
+params = list(model_Q_A.named_parameters())
 
-print('The BERT model has {:} different named parameters.\n'.format(len(params)))
+print('The BERT model_Q_A has {:} different named parameters.\n'.format(len(params)))
 
 print('======= Embedding Layer =======\n')
 for p in params[0:5]:
@@ -87,17 +87,17 @@ for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
 tb = SummaryWriter(f'runs/bert_{time.time()}')
-model.to(device)
+model_Q_A.to(device)
 # forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
 lrate = 1e-6
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-optimizer = AdamW(model.parameters(), **optim_pars)
+optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
 wd = os.getcwd()
-if not os.path.exists(wd + "/my_saved_model_directory"):
-    os.mkdir(wd + "/my_saved_model_directory")
-if not os.path.exists(wd + "/my_saved_model_directory_final"):
-    os.mkdir(wd + "/my_saved_model_directory_final")
+if not os.path.exists(wd + "/my_saved_model_Q_A_directory"):
+    os.mkdir(wd + "/my_saved_model_Q_A_directory")
+if not os.path.exists(wd + "/my_saved_model_Q_A_directory_final"):
+    os.mkdir(wd + "/my_saved_model_Q_A_directory_final")
 current_batch = 0
 total_phrase_pairs = 0
 epochs = 1
@@ -110,7 +110,7 @@ for epoch in range(epochs):
     counter = 0
     print("length of dataset: ", len(dataset))
     for idx, X in enumerate(dataset):
-        model.zero_grad()
+        model_Q_A.zero_grad()
         # number of phrases
         # X[0] is just the index
         # X[1] is the dialogue, X[1][0] are input phrases
@@ -130,33 +130,33 @@ for epoch in range(epochs):
             masked_lm_labels_tensor[i] = X['masked_lm_labels'][i].squeeze()
             new_input_eval[i] = X['new_input_eval'][i].squeeze()
 
-        outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
+        outputs = model_Q_A(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
         loss = outputs[0]
         total_loss += loss
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-        # check what the model is doing
-        # model.eval()
-        # output_model = model(new_input_eval)
-        # output_model = output_model[0].detach()
-        # idx = torch.argmax(output_model, dim = -1)
+        # check what the model_Q_A is doing
+        # model_Q_A.eval()
+        # output_model_Q_A = model_Q_A(new_input_eval)
+        # output_model_Q_A = output_model_Q_A[0].detach()
+        # idx = torch.argmax(output_model_Q_A, dim = -1)
         # given_text = tokenizer.convert_ids_to_tokens(new_input_eval[0])
         # generated_text = tokenizer.convert_ids_to_tokens(idx[0])
         # original_text = tokenizer.convert_ids_to_tokens(input_tensor[0])
 
-        # model.train()
+        # model_Q_A.train()
         counter += 1
-        tb.add_scalar('Loss_Bert_model', loss, epoch)
+        tb.add_scalar('Loss_Bert_model_Q_A', loss, epoch)
         if counter % 4000:
             print("*", end='')
 
     average_loss = total_loss / len(dataset)
     loss_list.append(average_loss)
-    model.save_pretrained(wd + "/my_saved_model_directory/")
+    model_Q_A.save_pretrained(wd + "/my_saved_model_Q_A_directory/")
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()
-model.save_pretrained(wd + "/my_saved_model_directory_final/")
-print(model.get_output_embeddings())
+model_Q_A.save_pretrained(wd + "/my_saved_model_Q_A_directory_final/")
+print(model_Q_A.get_output_embeddings())
