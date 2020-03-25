@@ -24,6 +24,7 @@ from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
 import utils
 import dataset
+import numpy as np
 
 start = time.time()
 voc = []
@@ -136,20 +137,31 @@ for epoch in range(epochs):
         token_id_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         attention_mask_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         masked_lm_labels_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
+        new_input_eval = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         for i in range(batch_size):
             input_tensor[i] = X[1][i]['input_ids'].squeeze()
             token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
             attention_mask_tensor[i] = X[1][i]['attention_mask'].squeeze()
             masked_lm_labels_tensor[i] = X[1][i]['masked_lm_labels'].squeeze()
+            new_input_eval[i] = X[1][i]['new_input_eval'].squeeze()
 
         outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
-
         loss = outputs[0]
         total_loss += loss
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+        # check what the model is doing
+        #model.eval()
+        #output_model = model(new_input_eval)
+        #output_model = output_model[0].detach()
+        #idx = torch.argmax(output_model, dim = -1)
+        #given_text = tokenizer.convert_ids_to_tokens(new_input_eval[0])
+        #generated_text = tokenizer.convert_ids_to_tokens(idx[0])
+        #original_text = tokenizer.convert_ids_to_tokens(input_tensor[0])
+
+        #model.train()
         counter += 1
         tb.add_scalar('Loss_Bert_model', loss, epoch)
         if counter % 4000:
