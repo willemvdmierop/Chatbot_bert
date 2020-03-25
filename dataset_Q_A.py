@@ -11,7 +11,7 @@ class MoviePhrasesData(data.Dataset):
 
     # voc: vocabulary, word:idx
     # all dialogues:
-    def __init__(self, all_dialogues, max_seq_len=40, unk_token='<UNK>', start_token='<S>', end_token='</S>',
+    def __init__(self, all_dialogues = None, questions_data = None, answers_data = None, max_seq_len=40, unk_token='<UNK>', start_token='<S>', end_token='</S>',
                  sep_token='<SEP>'):
         # why init superclass? access methods from data.Dataset
         # no need to rewrite methods from the superclass
@@ -21,6 +21,8 @@ class MoviePhrasesData(data.Dataset):
         self.max_seq_len = max_seq_len
         # self.voc = voc
         self.all_dialogues = all_dialogues
+        self.questions_data = questions_data
+        self.answers_data = answers_data
         self.unk_token = unk_token
         self.end_token = end_token
         self.start_token = start_token
@@ -30,7 +32,28 @@ class MoviePhrasesData(data.Dataset):
     # loads one full dialogue (K phrases in a dialogue), an OrderedDict
     # If there are a total K phrases, the data point will be
     # ((K-1) x (MAX_SEQ + 2), (K-1) x (MAX_SEQ + 2))
-    # zero-pad after EO
+    # zero-pad after EOS
+    def load_ques_answ(self, idx):
+        tokenizer = self.tokenizer
+        question = self.questions_data[idx]
+        answer = self.answers_data[idx]
+        kwargs = {'text': question,
+                  'text_pair': answer,
+                  'max_length': 40,
+                  'pad_to_max_length': True,
+                  'add_special_tokens': True,
+                  'return_tensors': 'pt',
+                  'return_token_type_ids': True,
+                  'return_attention_mask': True,
+                  'return_special_tokens_mask': True}
+        input_phrase = tokenizer.encode_plus(**kwargs)
+        masked_lm_labels = -100 * (torch.ones(len(input_phrase['attention_mask'])) - input_phrase['token_type_ids'] == 1)
+        input_phrase['attention_mask'] = copy.deepcopy(masked_lm_labels) / -100
+        new_input_eval = copy.deepcopy(input_phrase['input_ids'])
+        new_input_eval[(input_phrase['attention_mask'] - input_phrase['token_type_ids']) == 0] = tokenizer.convert_tokens_to_ids('[MASK]')
+        input_phrase['masked_lm_labels'] = masked_lm_labels
+        input_phrase['new_input_eval'] = new_input_eval
+        return input_phrase
 
     def load_dialogue(self, dialogue):
         dial = dialogue
@@ -69,13 +92,20 @@ class MoviePhrasesData(data.Dataset):
 
     # number of dialogues, 83097
     def __len__(self):
-        return len(self.all_dialogues)
+        if self.all_dialogues is not None:
+            return len(self.all_dialogues)
+        else:
+            return len(self.questions_data)
+
     # x: input sequence
     # y: output sequence
     # idx:
     # output: tuple of two torch tensor stacks size (K-1)x max_seq_len
     def __getitem__(self, idx):
+
         # Small test
-        self.dialogue = self.all_dialogues[idx]
-        self.phrase = self.load_dialogue(self.dialogue)
-        return idx, self.phrase
+        self.phrase = self.load_ques_answ(idx)
+        # self.dialogue = self.all_dialogues[idx]
+        # self.phrase = self.load_dialogue(self.dialogue)
+        #return idx, self.phrase
+        return self.phrase

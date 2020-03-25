@@ -23,7 +23,7 @@ from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
 import utils
-import dataset
+import dataset_Q_A as dataset
 import numpy as np
 
 start = time.time()
@@ -45,8 +45,8 @@ if (torch.cuda.is_available()):
 # print('scibert model', model_scibert)
 # return the list of OrderedDicts:
 # a total of 83097 dialogues
-#question_data, answer_data = utils.question_answers_dataset()
-full_data = utils.create_dialogue_dataset()
+question_data, answer_data = utils.question_answers_dataset()
+#full_data = utils.create_dialogue_dataset()
 
 end = time.time()
 print("\n" + 96 * '#')
@@ -58,7 +58,7 @@ print(96 * '#')
 def load_data(**train_pars):
     stage = train_pars['stage']
     #data = dataset.MoviePhrasesData(full_data)
-    data = dataset.MoviePhrasesData(all_dialogues = full_data)
+    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data)
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
@@ -114,9 +114,9 @@ for epoch in range(epochs):
         # number of phrases
         # X[0] is just the index
         # X[1] is the dialogue, X[1][0] are input phrases
-        batch_size = len(X[1])
-        # number of tokens in a sequence 
-        seq_length = len(X[1][0]['input_ids'].squeeze())
+        batch_size = len(X['input_ids'].squeeze())
+        # number of tokens in a sequence
+        seq_length = len(X['input_ids'][2].squeeze())
         total_phrase_pairs += batch_size
         input_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         token_id_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
@@ -124,11 +124,11 @@ for epoch in range(epochs):
         masked_lm_labels_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         new_input_eval = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         for i in range(batch_size):
-            input_tensor[i] = X[1][i]['input_ids'].squeeze()
-            token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
-            attention_mask_tensor[i] = X[1][i]['attention_mask'].squeeze()
-            masked_lm_labels_tensor[i] = X[1][i]['masked_lm_labels'].squeeze()
-            new_input_eval[i] = X[1][i]['new_input_eval'].squeeze()
+            input_tensor[i] = X['input_ids'][i].squeeze()
+            token_id_tensor[i] = X['token_type_ids'][i].squeeze()
+            attention_mask_tensor[i] = X['attention_mask'][i].squeeze()
+            masked_lm_labels_tensor[i] = X['masked_lm_labels'][i].squeeze()
+            new_input_eval[i] = X['new_input_eval'][i].squeeze()
 
         outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)

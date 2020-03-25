@@ -29,6 +29,29 @@ def load_dialogues(file):
             dialogues_all.append(l.strip().split(' +++$+++ '))
     return dialogues_all
 
+def question_answers_dataset():
+    all_movie_lines = all_lines
+    questions_dic = {}
+    answers_dic = {}
+    movie_dialogues = load_dialogues("movie_conversations.txt")
+    count = 0
+    for idx, dialogue in enumerate(movie_dialogues):
+        phrases = dialogue[-1]
+        phrases = re.split('\W+', phrases)[1:-1]
+        #for i in range(0,len(phrases) -1,2):
+        #    question = all_movie_lines[phrases[i]]
+        #    answer = all_movie_lines[phrases[i+1]]
+        #    question_answers[question] = answer
+        for id, ph in enumerate(phrases[:-1]):
+            question = all_movie_lines[phrases[id]]
+            answer = all_movie_lines[phrases[id+1]]
+            questions_dic[count] = question
+            answers_dic[count] = answer
+            count += 1
+
+    return questions_dic, answers_dic
+
+
 
 def create_dialogue_dataset():
     # first sample from each list
