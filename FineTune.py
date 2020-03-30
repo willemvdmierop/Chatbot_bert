@@ -114,9 +114,9 @@ for epoch in range(epochs):
         # number of phrases
         # X[0] is just the index
         # X[1] is the dialogue, X[1][0] are input phrases
-        batch_size = len(X[1])
+        batch_size = len(X[0])
         # number of tokens in a sequence 
-        seq_length = len(X[1][0]['input_ids'].squeeze())
+        seq_length = len(X[1][0]['input_ids'][0].squeeze())
         total_phrase_pairs += batch_size
         input_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         token_id_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
@@ -124,11 +124,11 @@ for epoch in range(epochs):
         masked_lm_labels_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         new_input_eval = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         for i in range(batch_size):
-            input_tensor[i] = X[1][i]['input_ids'].squeeze()
-            token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
-            attention_mask_tensor[i] = X[1][i]['attention_mask'].squeeze()
-            masked_lm_labels_tensor[i] = X[1][i]['masked_lm_labels'].squeeze()
-            new_input_eval[i] = X[1][i]['new_input_eval'].squeeze()
+            input_tensor[i] = X[1][0]['input_ids'][i].squeeze()
+            token_id_tensor[i] = X[1][0]['token_type_ids'][i].squeeze()
+            attention_mask_tensor[i] = X[1][0]['attention_mask'][i].squeeze()
+            masked_lm_labels_tensor[i] = X[1][0]['masked_lm_labels'][i].squeeze()
+            new_input_eval[i] = X[1][0]['new_input_eval'][i].squeeze()
 
         outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
@@ -149,7 +149,7 @@ for epoch in range(epochs):
         # model.train()
         counter += 1
         tb.add_scalar('Loss_Bert_model', loss, epoch)
-        if counter % 4000:
+        if counter % 4000 == 0:
             print("*", end='')
 
     average_loss = total_loss / len(dataset)
