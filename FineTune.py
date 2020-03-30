@@ -34,7 +34,7 @@ OOV = '<UNK>'
 START_TOKEN = "<S>"
 END_TOKEN = "</S>"
 max_phrase_length = 40
-minibatch_size = 250
+minibatch_size = 200
 
 device = 'cpu'
 if (torch.cuda.is_available()):
@@ -93,10 +93,11 @@ model.to(device)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
 lrate = 1e-4
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-optimizer = Adam(model.parameters(), **optim_pars)
+#optimizer = AdamW(model.parameters(), **optim_pars)
+optimizer = optim.Adam(model.parameters(), **optim_pars)
 wd = os.getcwd()
-if not os.path.exists(wd + "/my_saved_model_directory"):
-    os.mkdir(wd + "/my_saved_model_directory")
+if not os.path.exists(wd + "/my_saved_model_directory_tmp"):
+    os.mkdir(wd + "/my_saved_model_directory_tmp")
 if not os.path.exists(wd + "/my_saved_model_directory_final"):
     os.mkdir(wd + "/my_saved_model_directory_final")
 current_batch = 0
@@ -116,7 +117,7 @@ for epoch in range(epochs):
         # X[0] is just the index
         # X[1] is the dialogue, X[1][0] are input phrases
         batch_size = len(X[0])
-        # number of tokens in a sequence 
+        # number of tokens in a sequence
         seq_length = len(X[1][0]['input_ids'][0].squeeze())
         total_phrase_pairs += batch_size
         input_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
@@ -155,7 +156,7 @@ for epoch in range(epochs):
 
     average_loss = total_loss / len(dataset)
     loss_list.append(average_loss)
-    model.save_pretrained(wd + "/my_saved_model_directory/")
+    model.save_pretrained(wd + "/my_saved_model_directory_tmp/")
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()

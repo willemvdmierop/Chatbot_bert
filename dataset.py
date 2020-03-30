@@ -41,8 +41,8 @@ class MoviePhrasesData(data.Dataset):
         tokenizer = self.tokenizer
         for k in keys:
             # tokenize here, both key and reply
-            tokenized_k = tokenizer.tokenize(k)
-            tokenized_r = tokenizer.tokenize(dial[k])  # dial is a dict so dial[k] returns the value associated with k
+            #tokenized_k = tokenizer.tokenize(k)
+            #tokenized_r = tokenizer.tokenize(dial[k])  # dial is a dict so dial[k] returns the value associated with k
             kwargs = {'text': k,
                       'text_pair': dial[k],
                       'max_length': 40,
