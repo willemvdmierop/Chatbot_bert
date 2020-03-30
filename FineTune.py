@@ -20,7 +20,7 @@ from transformers import BertTokenizer
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
 from transformers import AutoModelWithLMHead, AutoTokenizer
 from transformers import AdamW
-from torch.optim import Adam
+import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
 import utils
