@@ -11,7 +11,7 @@ class MoviePhrasesData(data.Dataset):
 
     # voc: vocabulary, word:idx
     # all dialogues:
-    def __init__(self, all_dialogues, max_seq_len=40, unk_token='<UNK>', start_token='<S>', end_token='</S>',
+    def __init__(self, all_dialogues, scibert = False, max_seq_len=40, unk_token='<UNK>', start_token='<S>', end_token='</S>',
                  sep_token='<SEP>'):
         # why init superclass? access methods from data.Dataset
         # no need to rewrite methods from the superclass
@@ -25,7 +25,12 @@ class MoviePhrasesData(data.Dataset):
         self.end_token = end_token
         self.start_token = start_token
         self.sep_token = sep_token
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        if scibert:
+            self.tokenizer = BertTokenizer.from_pretrained("./scibert_scivocab_uncased")  # make sure this
+            # is our scibert combined with our cornell tokenizer
+        else:
+            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
 
     # loads one full dialogue (K phrases in a dialogue), an OrderedDict
     # If there are a total K phrases, the data point will be

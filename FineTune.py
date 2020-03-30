@@ -34,7 +34,7 @@ OOV = '<UNK>'
 START_TOKEN = "<S>"
 END_TOKEN = "</S>"
 max_phrase_length = 40
-minibatch_size = 200
+minibatch_size = 1
 
 device = 'cpu'
 if (torch.cuda.is_available()):
@@ -46,7 +46,7 @@ if (torch.cuda.is_available()):
 # print('scibert model', model_scibert)
 # return the list of OrderedDicts:
 # a total of 83097 dialogues
-#question_data, answer_data = utils.question_answers_dataset()
+# question_data, answer_data = utils.question_answers_dataset()
 full_data = utils.create_dialogue_dataset()
 
 end = time.time()
@@ -56,10 +56,10 @@ print(
 print(96 * '#')
 
 
+####################### change scibert to True if FineTuning scibert ! ###############################
 def load_data(**train_pars):
     stage = train_pars['stage']
-    #data = dataset.MoviePhrasesData(full_data)
-    data = dataset.MoviePhrasesData(all_dialogues = full_data)
+    data = dataset.MoviePhrasesData(all_dialogues=full_data, scibert=False)
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
@@ -89,11 +89,9 @@ for p in params[-4:]:
 
 tb = SummaryWriter()
 model.to(device)
-# forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
-# class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
 lrate = 1e-4
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-#optimizer = AdamW(model.parameters(), **optim_pars)
+# optimizer = AdamW(model.parameters(), **optim_pars)
 optimizer = optim.Adam(model.parameters(), **optim_pars)
 wd = os.getcwd()
 if not os.path.exists(wd + "/my_saved_model_directory_tmp"):
@@ -102,7 +100,7 @@ if not os.path.exists(wd + "/my_saved_model_directory_final"):
     os.mkdir(wd + "/my_saved_model_directory_final")
 current_batch = 0
 total_phrase_pairs = 0
-epochs = 1
+epochs = 10
 loss_list = []
 for epoch in range(epochs):
     t0 = time.time()
