@@ -20,6 +20,7 @@ from transformers import BertTokenizer
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
 from transformers import AutoModelWithLMHead, AutoTokenizer
 from transformers import AdamW
+from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
 import utils
@@ -33,7 +34,7 @@ OOV = '<UNK>'
 START_TOKEN = "<S>"
 END_TOKEN = "</S>"
 max_phrase_length = 40
-minibatch_size = 200
+minibatch_size = 250
 
 device = 'cpu'
 if (torch.cuda.is_available()):
@@ -86,13 +87,13 @@ print('\n======= Output Layer =======\n')
 for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
-tb = SummaryWriter(f'runs/bert_{time.time()}')
+tb = SummaryWriter(f"runs/bert_{time.time()}'")
 model.to(device)
 # forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
-lrate = 1e-6
+lrate = 1e-4
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-optimizer = AdamW(model.parameters(), **optim_pars)
+optimizer = Adam(model.parameters(), **optim_pars)
 wd = os.getcwd()
 if not os.path.exists(wd + "/my_saved_model_directory"):
     os.mkdir(wd + "/my_saved_model_directory")

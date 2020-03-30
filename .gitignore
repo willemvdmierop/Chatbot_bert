@@ -7,3 +7,8 @@
 .Spotlight-V100
 .Trashes
 runs/*
+*.0
+runs/bert_1585145333.45597/events.out.tfevents.1585145333.Willems-MacBook-Pro.local.16924.0
+runs/bert_1585155303.329649/events.out.tfevents.1585155303.Willems-MacBook-Pro.local.17336.0
+runs/bert_1585155347.3902552/events.out.tfevents.1585155347.Willems-MacBook-Pro.local.17352.0
+runs/bert_1585559483.108345/events.out.tfevents.1585559483.Willems-MacBook-Pro.local.10123.0

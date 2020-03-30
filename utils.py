@@ -29,6 +29,7 @@ def load_dialogues(file):
             dialogues_all.append(l.strip().split(' +++$+++ '))
     return dialogues_all
 
+
 def question_answers_dataset():
     all_movie_lines = all_lines
     questions_dic = {}
@@ -38,19 +39,18 @@ def question_answers_dataset():
     for idx, dialogue in enumerate(movie_dialogues):
         phrases = dialogue[-1]
         phrases = re.split('\W+', phrases)[1:-1]
-        #for i in range(0,len(phrases) -1,2):
+        # for i in range(0,len(phrases) -1,2):
         #    question = all_movie_lines[phrases[i]]
         #    answer = all_movie_lines[phrases[i+1]]
         #    question_answers[question] = answer
         for id, ph in enumerate(phrases[:-1]):
             question = all_movie_lines[phrases[id]]
-            answer = all_movie_lines[phrases[id+1]]
+            answer = all_movie_lines[phrases[id + 1]]
             questions_dic[count] = question
             answers_dic[count] = answer
             count += 1
 
     return questions_dic, answers_dic
-
 
 
 def create_dialogue_dataset():
@@ -70,10 +70,10 @@ def create_dialogue_dataset():
         this_dialogue = OrderedDict()
         # ph are like 'L19043' taken from the lines data
         for id, ph in enumerate(phrases[:-1]):
-            this_dialogue[all_movie_lines[ph]] = all_movie_lines[phrases[id + 1]] ##old code
-            #this_dialogue[ph, phrases[id+1]] = all_movie_lines[phrases[id+2]]
-        #if len(this_dialogue) != 0:    
-        full_list.append(this_dialogue)   
+            this_dialogue[all_movie_lines[ph]] = all_movie_lines[phrases[id + 1]]  ##old code
+            # this_dialogue[ph, phrases[id+1]] = all_movie_lines[phrases[id+2]]
+        # if len(this_dialogue) != 0:
+        full_list.append(this_dialogue)
 
     return full_list
 
@@ -92,4 +92,3 @@ def create_vocab():
                 vocab.append(w)
 
     return sorted(vocab)
-
