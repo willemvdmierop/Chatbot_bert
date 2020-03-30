@@ -20,7 +20,6 @@ from transformers import BertTokenizer
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
 from transformers import AutoModelWithLMHead, AutoTokenizer
 from transformers import AdamW
-from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
 import utils
@@ -87,17 +86,16 @@ print('\n======= Output Layer =======\n')
 for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
-tb = SummaryWriter()
+tb = SummaryWriter(f'runs/bert_{time.time()}')
 model.to(device)
 # forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
-lrate = 1e-4
+lrate = 1e-6
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-#optimizer = AdamW(model.parameters(), **optim_pars)
-optimizer = optim.Adam(model.parameters(), **optim_pars)
+optimizer = AdamW(model.parameters(), **optim_pars)
 wd = os.getcwd()
-if not os.path.exists(wd + "/my_saved_model_directory_tmp"):
-    os.mkdir(wd + "/my_saved_model_directory_tmp")
+if not os.path.exists(wd + "/my_saved_model_directory"):
+    os.mkdir(wd + "/my_saved_model_directory")
 if not os.path.exists(wd + "/my_saved_model_directory_final"):
     os.mkdir(wd + "/my_saved_model_directory_final")
 current_batch = 0
@@ -116,9 +114,9 @@ for epoch in range(epochs):
         # number of phrases
         # X[0] is just the index
         # X[1] is the dialogue, X[1][0] are input phrases
-        batch_size = len(X[0])
+        batch_size = len(X[1])
         # number of tokens in a sequence
-        seq_length = len(X[1][0]['input_ids'][0].squeeze())
+        seq_length = len(X[1][0]['input_ids'].squeeze())
         total_phrase_pairs += batch_size
         input_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         token_id_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
@@ -126,11 +124,11 @@ for epoch in range(epochs):
         masked_lm_labels_tensor = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         new_input_eval = torch.zeros((batch_size, seq_length), dtype=torch.long).to(device)
         for i in range(batch_size):
-            input_tensor[i] = X[1][0]['input_ids'][i].squeeze()
-            token_id_tensor[i] = X[1][0]['token_type_ids'][i].squeeze()
-            attention_mask_tensor[i] = X[1][0]['attention_mask'][i].squeeze()
-            masked_lm_labels_tensor[i] = X[1][0]['masked_lm_labels'][i].squeeze()
-            new_input_eval[i] = X[1][0]['new_input_eval'][i].squeeze()
+            input_tensor[i] = X[1][i]['input_ids'].squeeze()
+            token_id_tensor[i] = X[1][i]['token_type_ids'].squeeze()
+            attention_mask_tensor[i] = X[1][i]['attention_mask'].squeeze()
+            masked_lm_labels_tensor[i] = X[1][i]['masked_lm_labels'].squeeze()
+            new_input_eval[i] = X[1][i]['new_input_eval'].squeeze()
 
         outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
@@ -151,12 +149,12 @@ for epoch in range(epochs):
         # model.train()
         counter += 1
         tb.add_scalar('Loss_Bert_model', loss, epoch)
-        if counter % 4000 == 0:
+        if counter % 4000:
             print("*", end='')
 
     average_loss = total_loss / len(dataset)
     loss_list.append(average_loss)
-    model.save_pretrained(wd + "/my_saved_model_directory_tmp/")
+    model.save_pretrained(wd + "/my_saved_model_directory/")
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()

@@ -19,6 +19,7 @@ from collections import Counter, OrderedDict
 from transformers import BertTokenizer
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
 from transformers import AutoModelWithLMHead, AutoTokenizer
+from torch.optim import Adam
 from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
 # load the dataset interface
@@ -33,7 +34,7 @@ OOV = '<UNK>'
 START_TOKEN = "<S>"
 END_TOKEN = "</S>"
 max_phrase_length = 40
-minibatch_size = 200
+minibatch_size = 250
 
 device = 'cpu'
 if (torch.cuda.is_available()):
@@ -90,7 +91,7 @@ tb = SummaryWriter(f'runs/bert_{time.time()}')
 model_Q_A.to(device)
 # forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
 # class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
-lrate = 1e-6
+lrate = 1e-4
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
 optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
 wd = os.getcwd()
@@ -149,7 +150,7 @@ for epoch in range(epochs):
         # model_Q_A.train()
         counter += 1
         tb.add_scalar('Loss_Bert_model_Q_A', loss, epoch)
-        if counter % 4000:
+        if counter % 400 == 0:
             print("*", end='')
 
     average_loss = total_loss / len(dataset)
