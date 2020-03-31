@@ -89,7 +89,7 @@ print('Loading BERT model...')
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model_version = "/Users/willemvandemierop/Google Drive/DL Prediction (706)/my_saved_model_Q_A_directory_final"
+model_version = "/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/my_saved_model_directory_tmp"
 # tokenizer = AutoTokenizer.from_pretrained(model_version, do_lower_case=True)
 model = BertForMaskedLM.from_pretrained(model_version)
 # model = BertForMaskedLM.from_pretrained('bert-base-uncased')
@@ -170,7 +170,7 @@ def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_
 
 def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
     # get initial sentence by padding seed_text with either masks or random words to max_len
-    batch = [seed_text +  [MASK] * max_len + [SEP] for _ in range(batch_size)]
+    batch = [seed_text + [MASK] * max_len + [SEP] for _ in range(batch_size)]
     return tokenize_batch(batch)
 
 

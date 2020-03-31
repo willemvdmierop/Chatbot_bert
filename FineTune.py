@@ -33,8 +33,8 @@ voc = []
 OOV = '<UNK>'
 START_TOKEN = "<S>"
 END_TOKEN = "</S>"
-max_phrase_length = 40
-minibatch_size = 1
+max_phrase_length = 50
+minibatch_size = 250
 
 device = 'cpu'
 if (torch.cuda.is_available()):
@@ -60,7 +60,7 @@ print(96 * '#')
 def load_data(**train_pars):
     stage = train_pars['stage']
     data = dataset.MoviePhrasesData(all_dialogues=full_data, scibert=False)
-    train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
+    train_dataset_params = {'batch_size': minibatch_size, 'shuffle': False}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
 
@@ -71,7 +71,10 @@ print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
 # Load the BERT tokenizer.
 print('Loading BERT model...')
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+# model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+model_version = "./my_saved_model_directory_tmp"
+# tokenizer = AutoTokenizer.from_pretrained(model_version, do_lower_case=True)
+model = BertForMaskedLM.from_pretrained(model_version)
 
 params = list(model.named_parameters())
 
@@ -132,6 +135,9 @@ for epoch in range(epochs):
 
         outputs = model(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
+        prhases = []
+        for i in range(batch_size):
+            prhases.append(tokenizer.convert_ids_to_tokens(input_tensor[i]))
         loss = outputs[0]
         total_loss += loss
         loss.backward()

@@ -1,21 +1,10 @@
 import os, sys, re
 import time
 import torch
-import torchvision
-# import nltk
-# import pandas
-# from nltk.corpus import stopwords
-# from nltk.tokenize import word_tokenize
-# pytorch layers
-import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.nn import Sequential, Embedding, Linear, Conv1d, MaxPool1d, LSTM
-from torch.nn import CrossEntropyLoss as CrossEntropyLoss
-import torch.utils.data as data
-from torch.jit import script, trace
+import torchvision
 from torch.utils.data import DataLoader as DataLoader
-from collections import Counter, OrderedDict
 from transformers import BertTokenizer
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
 from transformers import AutoModelWithLMHead, AutoTokenizer
@@ -26,57 +15,63 @@ from torch.utils.tensorboard import SummaryWriter
 import utils
 import dataset_Q_A as dataset
 import numpy as np
-
-start = time.time()
-voc = []
-# tokens for OOV, start and end
-OOV = '<UNK>'
-START_TOKEN = "<S>"
-END_TOKEN = "</S>"
-max_phrase_length = 40
-minibatch_size = 250
-
 device = 'cpu'
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
-# Todo this implementation is for scibert
-# tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
-# model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
-# print('scibert model', model_scibert)
-# return the list of OrderedDicts:
-# a total of 83097 dialogues
+
+start = time.time()
+OOV = '<UNK>'
+START_TOKEN = "<S>"
+END_TOKEN = "</S>"
+
 question_data, answer_data = utils.question_answers_dataset()
-#full_data = utils.create_dialogue_dataset()
+
+max_length_questions = 0
+mean_length_q = 0
+for i in range(len(question_data)):
+    max_length_questions = max(max_length_questions, len(question_data[i]))
+    mean_length_q += len(question_data[i])
+mean_length_q /= len(question_data)
+
+mean_length_a = 0
+max_length_answers = 0
+for i in range(len(answer_data)):
+    max_length_answers = max(max_length_answers, len(answer_data[i]))
+    mean_length_a += len(answer_data[i])
+
+mean_length_a /= len(answer_data)
+
 
 end = time.time()
 print("\n" + 96 * '#')
-print(
-    'Total data preprocessing time is {0:.2f} and the length of the vocabulary is {1:d}'.format(end - start, len(voc)))
+print('Total data preprocessing time is {0:.2f} and the length of the vocabulary is {1:d}'.format(end - start, len(question_data)))
+print('## Question data[0] : {} , \n## Answer data[0] :  {}'.format(question_data[0], answer_data[0]))
+print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
+print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
 print(96 * '#')
 
 
 def load_data(**train_pars):
     stage = train_pars['stage']
-    #data = dataset.MoviePhrasesData(full_data)
-    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data)
+    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data, scibert = False)
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
 
 
+max_phrase_length = 40
+minibatch_size = 250
 load_data_pars = {'stage': 'train', 'num_workers': 3}
-dataset = load_data(**load_data_pars)  # this returns a dataloader
-print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
-# Load the BERT tokenizer.
+dataLoader = load_data(**load_data_pars)  # this returns a dataloader
+print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
+#################################### Load the BERT tokenizer. ###################################
+
 print('Loading BERT model...')
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
-
 params = list(model_Q_A.named_parameters())
-
 print('The BERT model_Q_A has {:} different named parameters.\n'.format(len(params)))
-
 print('======= Embedding Layer =======\n')
 for p in params[0:5]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
@@ -87,18 +82,20 @@ print('\n======= Output Layer =======\n')
 for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 
-tb = SummaryWriter(f'runs/bert_{time.time()}')
+
+print('\n' + 40 * '#', "Training on dataset", 40 * '#')
+############################ Training the Question and answer dataset Model ####################
+
+tb = SummaryWriter()
 model_Q_A.to(device)
-# forward(input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None)
-# class transformers.AdamW(params, lr=0.001, betas=(0.9, 0.999), eps=1e-06, weight_decay=0.0, correct_bias=True)
 lrate = 1e-4
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
+optimizer = Adam(model_Q_A.parameters(), **optim_pars)
 wd = os.getcwd()
-if not os.path.exists(wd + "/my_saved_model_Q_A_directory"):
-    os.mkdir(wd + "/my_saved_model_Q_A_directory")
-if not os.path.exists(wd + "/my_saved_model_Q_A_directory_final"):
-    os.mkdir(wd + "/my_saved_model_Q_A_directory_final")
+if not os.path.exists(wd + "/my_saved_model_dir_QA_tmp"):
+    os.mkdir(wd + "/my_saved_model_dir_QA_tmp")
+if not os.path.exists(wd + "/my_saved_model_dir_QA_final"):
+    os.mkdir(wd + "/my_saved_model_dir_QA_final")
 current_batch = 0
 total_phrase_pairs = 0
 epochs = 1
@@ -109,8 +106,8 @@ for epoch in range(epochs):
     print('======== Epoch {:} / {:} ========'.format(epoch + 1, epochs))
     total_loss = 0
     counter = 0
-    print("length of dataset: ", len(dataset))
-    for idx, X in enumerate(dataset):
+    print("length of DataLoader: ", len(dataLoader))
+    for idx, X in enumerate(dataLoader):
         model_Q_A.zero_grad()
         # number of phrases
         # X[0] is just the index
@@ -133,6 +130,10 @@ for epoch in range(epochs):
 
         outputs = model_Q_A(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
+
+        #prhases = []
+        #for i in range(batch_size):
+        #    prhases.append(tokenizer.convert_ids_to_tokens(input_tensor[i]))
         loss = outputs[0]
         total_loss += loss
         loss.backward()
@@ -153,11 +154,11 @@ for epoch in range(epochs):
         if counter % 400 == 0:
             print("*", end='')
 
-    average_loss = total_loss / len(dataset)
+    average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)
-    model_Q_A.save_pretrained(wd + "/my_saved_model_Q_A_directory/")
+    model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_tmp/")
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()
-model_Q_A.save_pretrained(wd + "/my_saved_model_Q_A_directory_final/")
-print(model_Q_A.get_output_embeddings())
+model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_final/")
+
