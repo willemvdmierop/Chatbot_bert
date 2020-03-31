@@ -52,22 +52,43 @@ print(96 * '#')
 
 def load_data(**train_pars):
     stage = train_pars['stage']
-    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data, scibert = False)
+    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data, scibert = scibert_train)
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
 
-
+############# SCIBERT ###########
+scibert_train = True ############
+#################################
 max_phrase_length = 40
 minibatch_size = 250
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader
 print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
 #################################### Load the BERT tokenizer. ########################################
-
+wd = os.getcwd()
 print('Loading BERT model...')
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
+if scibert_train:
+    print("Attention we are initializing the scibert model with scibert tokenizer!")
+    tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased', do_lower_case=True)
+    model_Q_A = BertForMaskedLM.from_pretrained('./scibert_scivocab_uncased')
+    model_Q_A.to(device)
+    if not os.path.exists(wd + "/my_saved_model_dir_QA_Scibert_tmp"):
+        os.mkdir(wd + "/my_saved_model_dir_QA_Scibert_tmp")
+    if not os.path.exists(wd + "/my_saved_model_dir_QA_Scibert_final"):
+        os.mkdir(wd + "/my_saved_model_dir_QA_Scibert_final")
+    # !Attention we need the full size of the new vocabulary!!
+    model_Q_A.resize_token_embeddings(len(tokenizer))
+else:
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+    model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
+    model_Q_A.to(device)
+    if not os.path.exists(wd + "/my_saved_model_dir_QA_tmp"):
+        os.mkdir(wd + "/my_saved_model_dir_QA_tmp")
+    if not os.path.exists(wd + "/my_saved_model_dir_QA_final"):
+        os.mkdir(wd + "/my_saved_model_dir_QA_final")
+
+
 params = list(model_Q_A.named_parameters())
 print('The BERT model_Q_A has {:} different named parameters.\n'.format(len(params)))
 print('======= Embedding Layer =======\n')
@@ -85,15 +106,11 @@ print('\n' + 40 * '#', "Training on dataset", 40 * '#')
 ############################ Training the Question and answer dataset Model #########################
 
 tb = SummaryWriter()
-model_Q_A.to(device)
+
 lrate = 1e-4
 optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
 optimizer = Adam(model_Q_A.parameters(), **optim_pars)
-wd = os.getcwd()
-if not os.path.exists(wd + "/my_saved_model_dir_QA_tmp"):
-    os.mkdir(wd + "/my_saved_model_dir_QA_tmp")
-if not os.path.exists(wd + "/my_saved_model_dir_QA_final"):
-    os.mkdir(wd + "/my_saved_model_dir_QA_final")
+
 current_batch = 0
 total_phrase_pairs = 0
 epochs = 1
@@ -134,15 +151,24 @@ for epoch in range(epochs):
         optimizer.step()
         optimizer.zero_grad()
         counter += 1
-        tb.add_scalar('Loss_Bert_model_Q_A', loss, epoch)
+        if scibert_train:
+            tb.add_scalar('Loss_Bert_model_Q_A_Scibert', loss, epoch)
+        else:
+            tb.add_scalar('Loss_Bert_model_Q_A', loss, epoch)
         if counter % 400 == 0:
             print("*", end='')
 
     average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)
-    model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_tmp/")
+    if scibert_train:
+        model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_Scibert_tmp/")
+    else:
+        model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_tmp/")
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()
-model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_final/")
+if scibert_train:
+    model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_Scibert_final/")
+else:
+    model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_final/")
 
