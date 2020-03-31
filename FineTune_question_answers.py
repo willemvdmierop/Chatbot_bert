@@ -39,9 +39,7 @@ max_length_answers = 0
 for i in range(len(answer_data)):
     max_length_answers = max(max_length_answers, len(answer_data[i]))
     mean_length_a += len(answer_data[i])
-
 mean_length_a /= len(answer_data)
-
 
 end = time.time()
 print("\n" + 96 * '#')
@@ -65,7 +63,7 @@ minibatch_size = 250
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader
 print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
-#################################### Load the BERT tokenizer. ###################################
+#################################### Load the BERT tokenizer. ########################################
 
 print('Loading BERT model...')
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
@@ -84,7 +82,7 @@ for p in params[-4:]:
 
 
 print('\n' + 40 * '#', "Training on dataset", 40 * '#')
-############################ Training the Question and answer dataset Model ####################
+############################ Training the Question and answer dataset Model #########################
 
 tb = SummaryWriter()
 model_Q_A.to(device)
@@ -130,25 +128,11 @@ for epoch in range(epochs):
 
         outputs = model_Q_A(input_ids=input_tensor, attention_mask=attention_mask_tensor, token_type_ids=token_id_tensor,
                         masked_lm_labels=masked_lm_labels_tensor)
-
-        #prhases = []
-        #for i in range(batch_size):
-        #    prhases.append(tokenizer.convert_ids_to_tokens(input_tensor[i]))
         loss = outputs[0]
         total_loss += loss
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-        # check what the model_Q_A is doing
-        # model_Q_A.eval()
-        # output_model_Q_A = model_Q_A(new_input_eval)
-        # output_model_Q_A = output_model_Q_A[0].detach()
-        # idx = torch.argmax(output_model_Q_A, dim = -1)
-        # given_text = tokenizer.convert_ids_to_tokens(new_input_eval[0])
-        # generated_text = tokenizer.convert_ids_to_tokens(idx[0])
-        # original_text = tokenizer.convert_ids_to_tokens(input_tensor[0])
-
-        # model_Q_A.train()
         counter += 1
         tb.add_scalar('Loss_Bert_model_Q_A', loss, epoch)
         if counter % 400 == 0:

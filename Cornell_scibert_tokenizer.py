@@ -75,6 +75,11 @@ def load_vocab(vocab_file):
         vocab[token] = index
     return vocab
 
+vocab_original = load_vocab("vocab_cornell.txt")
+print(len(vocab_original))
+
+vocab_build = load_vocab("/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/scibert_scivocab_uncased/vocab.txt")
+print(len(vocab_build))
 
 class scibert_cornell_Tokenizer(PreTrainedTokenizer):
     r"""
@@ -214,8 +219,3 @@ token = scibert_cornell_Tokenizer("vocab.txt")
 
 token.save_vocabulary("/Users/willemvandemierop/Google Drive/DL Prediction (706)")
 
-vocab_original=load_vocab("vocab.txt")
-print(len(vocab_original))
-
-vocab_build = load_vocab("/Users/willemvandemierop/Google Drive/DL Prediction (706)/vocab.txt")
-print(len(vocab_build))
