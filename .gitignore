@@ -14,3 +14,4 @@ runs/bert_1585155347.3902552/events.out.tfevents.1585155347.Willems-MacBook-Pro.
 runs/bert_1585559483.108345/events.out.tfevents.1585559483.Willems-MacBook-Pro.local.10123.0
 .DS_Store
 .DS_Store
+*.bin
