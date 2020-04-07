@@ -57,11 +57,19 @@ def load_data(**train_pars):
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
 
+Q_above_30 = []
+A_above_30 = []
+for i in range(len(question_data)):
+    if len(question_data[i]) > 30:
+        Q_above_30.append(question_data[i])
+        A_above_30.append(answer_data[i])
+
+
 ############# SCIBERT ###########
 scibert_train = True ############
 #################################
 max_phrase_length = 40
-minibatch_size = 250
+minibatch_size = 100
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader
 print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
