@@ -15,10 +15,45 @@ from torch.utils.tensorboard import SummaryWriter
 import utils
 import dataset_Q_A as dataset
 import numpy as np
+
 device = 'cpu'
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
 
+
+#################################
+### Training Hyper-Parameters ###
+#################################
+
+max_phrase_length = 40
+minibatch_size = 200
+lrate = 1e-4
+lrate_str = '0001'
+w_decay = 1e-3
+w_decay_str = '001'
+epochs = 1
+
+######## SCIBERT /ARXIV ##########
+scibert_train = False ############
+arxiv_train = False ##############
+##################################
+
+##########################
+### Folder/File Naming ###
+##########################
+if scibert_train:
+    dirname = '/model_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
+    lossname = '/loss_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
+elif arxiv_train:
+    dirname = '/model_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
+    lossname = '/loss_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
+else:
+    dirname = '/model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
+    lossname = '/loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
+dirname_tmp =  dirname + '_tmp'
+dirname_final = dirname + '_final'
+
+###########################
 
 start = time.time()
 OOV = '<UNK>'
@@ -65,11 +100,7 @@ for i in range(len(question_data)):
         A_above_30.append(answer_data[i])
 
 
-############# SCIBERT ###########
-scibert_train = True ############
-#################################
-max_phrase_length = 40
-minibatch_size = 100
+
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader
 print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
@@ -80,21 +111,18 @@ if scibert_train:
     print("Attention we are initializing the scibert model with scibert tokenizer!")
     tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased', do_lower_case=True)
     model_Q_A = BertForMaskedLM.from_pretrained('./scibert_scivocab_uncased')
-    model_Q_A.to(device)
-    if not os.path.exists(wd + "/my_saved_model_dir_QA_Scibert_tmp"):
-        os.mkdir(wd + "/my_saved_model_dir_QA_Scibert_tmp")
-    if not os.path.exists(wd + "/my_saved_model_dir_QA_Scibert_final"):
-        os.mkdir(wd + "/my_saved_model_dir_QA_Scibert_final")
     # !Attention we need the full size of the new vocabulary!!
     model_Q_A.resize_token_embeddings(len(tokenizer))
+# TODO : add loading of arxiv model
 else:
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
     model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
-    model_Q_A.to(device)
-    if not os.path.exists(wd + "/my_saved_model_dir_QA_tmp"):
-        os.mkdir(wd + "/my_saved_model_dir_QA_tmp")
-    if not os.path.exists(wd + "/my_saved_model_dir_QA_final"):
-        os.mkdir(wd + "/my_saved_model_dir_QA_final")
+model_Q_A.to(device)
+if not os.path.exists(wd + dirname_tmp):
+    os.mkdir(wd + dirname_tmp)
+if not os.path.exists(wd + dirname_final):
+    os.mkdir(wd + dirname_final)
+    
 
 
 params = list(model_Q_A.named_parameters())
@@ -115,13 +143,11 @@ print('\n' + 40 * '#', "Training on dataset", 40 * '#')
 
 tb = SummaryWriter()
 
-lrate = 1e-4
-optim_pars = {'lr': lrate, 'weight_decay': 1e-3}
-optimizer = Adam(model_Q_A.parameters(), **optim_pars)
+optim_pars = {'lr': lrate, 'weight_decay': w_decay}
+optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
 
 current_batch = 0
 total_phrase_pairs = 0
-epochs = 1
 loss_list = []
 for epoch in range(epochs):
     t0 = time.time()
@@ -159,24 +185,16 @@ for epoch in range(epochs):
         optimizer.step()
         optimizer.zero_grad()
         counter += 1
-        if scibert_train:
-            tb.add_scalar('Loss_Bert_model_Q_A_Scibert', loss, epoch)
-        else:
-            tb.add_scalar('Loss_Bert_model_Q_A', loss, epoch)
+        tb.add_scalar(lossname, loss, epoch)
         if counter % 400 == 0:
             print("*", end='')
 
     average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)
-    if scibert_train:
-        model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_Scibert_tmp/")
-    else:
-        model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_tmp/")
+    model_Q_A.save_pretrained(wd + dirname_tmp)
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()
-if scibert_train:
-    model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_Scibert_final/")
-else:
-    model_Q_A.save_pretrained(wd + "/my_saved_model_dir_QA_final/")
+model_Q_A.save_pretrained(wd + dirname_final)
+
 
