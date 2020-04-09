@@ -26,7 +26,7 @@ if (torch.cuda.is_available()):
 #################################
 
 max_phrase_length = 40
-minibatch_size = 200
+minibatch_size = 100
 lrate = 1e-4
 lrate_str = '0001'
 w_decay = 1e-3
@@ -34,7 +34,7 @@ w_decay_str = '001'
 epochs = 1
 
 ######## SCIBERT /ARXIV ##########
-scibert_train = False ############
+scibert_train = True ############
 arxiv_train = False ##############
 ##################################
 
@@ -91,15 +91,6 @@ def load_data(**train_pars):
     train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
     dataloader = DataLoader(data, **train_dataset_params)
     return dataloader
-
-Q_above_30 = []
-A_above_30 = []
-for i in range(len(question_data)):
-    if len(question_data[i]) > 30:
-        Q_above_30.append(question_data[i])
-        A_above_30.append(answer_data[i])
-
-
 
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader

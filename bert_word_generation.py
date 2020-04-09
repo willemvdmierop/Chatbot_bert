@@ -88,11 +88,12 @@ print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
 print('Loading BERT model...')
 # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model_version = "/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/my_saved_model_directory_tmp"
-# tokenizer = AutoTokenizer.from_pretrained(model_version, do_lower_case=True)
+#tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+model_version = "/content/drive/My Drive/DL Prediction (706)/Scibert_adamW/model_scibert_lr0001_wd001_batch100_ep10_tmp"
+tokenizer_path = "/content/drive/My Drive/DL Prediction (706)/scibert_scivocab_uncased_cornell"
+tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
 model = BertForMaskedLM.from_pretrained(model_version)
-# model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+#model = BertForMaskedLM.from_pretrained('bert-base-uncased')
 model.eval()
 model = model.to(device)
 params = list(model.named_parameters())
@@ -296,6 +297,7 @@ max_iter = 500
 
 # Choose the prefix context
 seed_text = "hello how are you".split()
+len_seed = len(seed_text)
 bert_sents = generate(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
                       generation_mode=generation_mode,
                       sample=sample, top_k=top_k, temperature=temperature, burnin=burnin, max_iter=max_iter,
@@ -350,6 +352,10 @@ def self_unique_ngrams(preds, max_n=4):
 
 max_n = 4
 
+for i in range(len(bert_sents)):
+  bert_sents[i] = bert_sents[i][len_seed:]
+
+print(bert_sents)
 print("BERT %s self-BLEU: %.2f" % (model_version, 100 * self_bleu(bert_sents)))
 
 pct_uniques = self_unique_ngrams(bert_sents, max_n)
