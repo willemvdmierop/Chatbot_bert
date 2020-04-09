@@ -7,271 +7,31 @@ Original file is located at
     https://colab.research.google.com/drive/1LudsqFkWsvo2IJ3PezXUX1I8-VmUEFAn
 """
 
-# import sys
-# sys.path.append('/content/drive/My Drive/DeepLearning prediction/Chatbot')
-
-# pip install transformers
-
-import os, sys, re
-import time
+from transformers import AutoTokenizer, AutoModel, BertForMaskedLM, AutoModelWithLMHead, BertTokenizer
 import torch
-import torchvision
-import numpy as np
-import torch.nn.functional as F
-import torch.nn as nn
-from torch.nn import Sequential, Embedding, Linear, Conv1d, MaxPool1d, LSTM
-from torch.nn import CrossEntropyLoss as CrossEntropyLoss
-import torch.utils.data as data
-from torch.jit import script, trace
-from torch.utils.data import DataLoader as DataLoader
-from collections import Counter, OrderedDict
-from transformers import BertTokenizer
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModel, BertForMaskedLM
-from transformers import AutoModelWithLMHead, AutoTokenizer
-from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
-import time
-import math
-# load the dataset interface
-import utils
-import dataset
+import utils_generation as ugen
+
+
+device = 'cpu'
+cuda = False
+if (torch.cuda.is_available()):
+    device = torch.device('cuda')
+    cuda = True
 
 # %matplotlib inline
 # %load_ext tensorboard
-
-# print(os.getcwd())
-# os.chdir("/content/drive/My Drive/DL Prediction (706)")
-# print(os.getcwd())
-
 # %tensorboard --logdir=runs
 
-start = time.time()
-voc = []
-# tokens for OOV, start and end
-OOV = '<UNK>'
-START_TOKEN = "<S>"
-END_TOKEN = "</S>"
-max_phrase_length = 40
-minibatch_size = 1
-
-device = 'cpu'
-if (torch.cuda.is_available()):
-    device = torch.device('cuda')
-
-# Todo this implementation is for scibert
-# tokenizer_scibert = AutoTokenizer.from_pretrained("./scibert_scivocab_uncased")
-# model_scibert = BertForMaskedLM.from_pretrained("./scibert_scivocab_uncased")
-# print('scibert model', model_scibert)
-# return the list of OrderedDicts:
-# a total of 83097 dialogues
-full_data = utils.create_dialogue_dataset()
-
-end = time.time()
-print("\n" + 96 * '#')
-print(
-    'Total data preprocessing time is {0:.2f} and the length of the vocabulary is {1:d}'.format(end - start, len(voc)))
-print(96 * '#')
-
-
-def load_data(**train_pars):
-    stage = train_pars['stage']
-    data = dataset.MoviePhrasesData(full_data)
-    train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
-    dataloader = DataLoader(data, **train_dataset_params)
-    return dataloader
-
-
-load_data_pars = {'stage': 'train', 'num_workers': 3}
-dataset = load_data(**load_data_pars)  # this returns a dataloader
-print('\n' + 40 * '#', "Now FineTuning", 40 * '#')
 # Load the BERT tokenizer.
 print('Loading BERT model...')
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-
-#tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-model_version = "/content/drive/My Drive/DL Prediction (706)/Scibert_adamW/model_scibert_lr0001_wd001_batch100_ep10_tmp"
-tokenizer_path = "/content/drive/My Drive/DL Prediction (706)/scibert_scivocab_uncased_cornell"
-tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
-model = BertForMaskedLM.from_pretrained(model_version)
-#model = BertForMaskedLM.from_pretrained('bert-base-uncased')
-model.eval()
-model = model.to(device)
-params = list(model.named_parameters())
-
-print('The BERT model has {:} different named parameters.\n'.format(len(params)))
-
-print('======= Embedding Layer =======\n')
-for p in params[0:5]:
-    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-print('\n======= First Transformer =======\n')
-for p in params[5:21]:
-    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-print('\n======= Output Layer =======\n')
-for p in params[-4:]:
-    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
-
-PAD, MASK, CLS, SEP = '[PAD]', '[MASK]', '[CLS]', '[SEP]'
+model_path = "./model_bert_lr0001_wd001_batch100_ep40_final_AdamW"
+tokenizer_path = "bert-base-uncased"
+ugen.load_model_tokenizer(model_path = model_path, tokenizer_path = tokenizer_path)
 
 
-def tokenize_batch(batch):
-    return [tokenizer.convert_tokens_to_ids(sent) for sent in batch]
-
-
-def untokenize_batch(batch):
-    return [tokenizer.convert_ids_to_tokens(sent) for sent in batch]
-
-
-def detokenize(sent):
-    new_sent = []
-    for i, token in enumerate(sent):
-        if token.startswith("##"):
-            new_sent[len(new_sent) - 1] = new_sent[len(new_sent) - 1] + token[2:]
-        else:
-            new_sent.append(token)
-    return new_sent
-
-
-CLS = '[CLS]'
-SEP = '[SEP]'
-MASK = '[MASK]'
-mask_id = tokenizer.convert_tokens_to_ids([MASK])[0]
-sep_id = tokenizer.convert_tokens_to_ids([SEP])[0]
-cls_id = tokenizer.convert_tokens_to_ids([CLS])[0]
-
-
-def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_list=True):
-    """ Generate a word from from out[gen_idx]
-    
-    args:
-        - out (torch.Tensor): tensor of logits of size batch_size x seq_len x vocab_size
-        - gen_idx (int): location for which to generate for
-        - top_k (int): if >0, only sample from the top k most probable words
-        - sample (Bool): if True, sample from full distribution. Overridden by top_k
-
-    - explanation of tempereture:
-    https://towardsdatascience.com/how-to-sample-from-language-models-682bceb97277
-
-  """
-    # print(out.shape)
-    logits = out[:, gen_idx]
-    if temperature is not None:
-        logits = logits / temperature
-    if top_k > 0:
-        kth_vals, kth_idx = logits.topk(top_k,
-                                        dim=1)  # topk is a torch method that returns the k largest element, in this case top_k = k
-        dist = torch.distributions.categorical.Categorical(logits=kth_vals)
-        idx = kth_idx.gather(dim=1, index=dist.sample().unsqueeze(-1)).squeeze(-1)
-    elif sample:
-        dist = torch.distributions.categorical.Categorical(logits=logits)
-        idx = dist.sample().squeeze(-1)
-    else:
-        idx = torch.argmax(logits, dim=-1)
-    return idx.tolist() if return_list else idx
-
-
-def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
-    # get initial sentence by padding seed_text with either masks or random words to max_len
-    batch = [seed_text + [MASK] * max_len + [SEP] for _ in range(batch_size)]
-    return tokenize_batch(batch)
-
-
-def printer(sent, should_detokenize=True, length_question=1):
-    if should_detokenize:
-        sent = detokenize(sent)[length_question:-1]  # [CLS] and [SEP] don't need to be detokenized
-    print(" ".join(sent))
-
-
-def sequential_generation(seed_text, batch_size=10, max_len=15, leed_out_len=15,
-                          top_k=0, temperature=None, sample=False, cuda=True):
-    seed_len = len(seed_text)
-    batch = get_init_text(seed_text, max_len, batch_size)
-
-    for i in range(max_len):
-        input_text = [sent[:seed_len + i + leed_out_len] + [sep_id] for sent in batch]
-        input_text = torch.tensor(batch).cuda() if cuda else torch.tensor(batch)
-        output_model = model(input_text)
-        output_model = output_model[0].detach()
-        idxs = generate_step(output_model, gen_idx=seed_len + i, top_k=top_k, temperature=temperature, sample=sample)
-        for j in range(batch_size):
-            batch[j][seed_len + i] = idxs[j]
-
-    return untokenize_batch(batch)
-
-
-def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0, temperature=None, max_iter=300,
-                                   burnin=200,
-                                   cuda=False, print_every=10, verbose=True):
-    """ Generate for one random position at a timestep
-
-    args:
-        - burnin: during burn-in period, sample from full distribution; afterwards take argmax
-    """
-    seed_len = len(seed_text)
-    batch = get_init_text(seed_text, max_len, batch_size)
-
-    for ii in range(max_iter):
-        kk = np.random.randint(0, max_len)
-        for jj in range(batch_size):
-            batch[jj][seed_len + kk] = mask_id
-        inp = torch.tensor(batch).cuda() if cuda else torch.tensor(batch)
-        out = model(inp)
-        out = out[0].detach()
-        topk = top_k if (ii >= burnin) else 0
-        idxs = generate_step(out, gen_idx=seed_len + kk, top_k=topk, temperature=temperature, sample=(ii < burnin))
-        for jj in range(batch_size):
-            batch[jj][seed_len + kk] = idxs[jj]
-
-        if verbose and np.mod(ii + 1, print_every) == 0:
-            for_print = tokenizer.convert_ids_to_tokens(batch[0])
-            for_print = for_print[:seed_len + kk + 1] + ['(*)'] + for_print[seed_len + kk + 1:]
-            print("iter", ii + 1, " ".join(for_print))
-
-    return untokenize_batch(batch)
-
-
-def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
-                  sample=False, top_k=100, temperature=1.0, cuda=True, print_every=1):
-    sentences = []
-    n_batches = math.ceil(n_samples / batch_size)
-    start_time = time.time()
-    for batch_n in range(n_batches):
-        batch = sequential_generation(seed_text, batch_size=batch_size, max_len=max_len, top_k=top_k,
-                                      temperature=temperature, leed_out_len=leed_out_len, sample=sample,
-                                      cuda=cuda)
-
-        if (batch_n + 1) % print_every == 0:
-            # print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
-            start_time = time.time()
-        sentences += batch
-    return sentences
-
-
-def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
-             generation_mode="parallel-sequential",
-             sample=True, top_k=100, temperature=1.0, burnin=200, max_iter=500,
-             cuda=False, print_every=1):
-    # main generation function to call
-    sentences = []
-    n_batches = math.ceil(n_samples / batch_size)
-    start_time = time.time()
-    for batch_n in range(n_batches):
-        if generation_mode == "parallel-sequential":
-            batch = parallel_sequential_generation(seed_text, batch_size=batch_size, max_len=max_len, top_k=top_k,
-                                                   temperature=temperature, burnin=burnin, max_iter=max_iter,
-                                                   cuda=cuda, verbose=False)
-        elif generation_mode == "sequential":
-            batch = sequential_generation(seed_text, batch_size=batch_size, max_len=max_len, top_k=top_k,
-                                          temperature=temperature, leed_out_len=leed_out_len, sample=sample,
-                                          cuda=cuda)
-        if (batch_n + 1) % print_every == 0:
-            print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
-            start_time = time.time()
-
-        sentences += batch
-    return sentences
 
 """We're finally going to use the generation function: 
-
 
 1.   max_len(40): length of sequence to generate
 2.   top_k(100): at each step, sample from the top_k most likely words
@@ -279,14 +39,9 @@ def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
 4.   seed_text(["CLS"]): prefix to generate for. we start with this as a test later text needs to be added for bot.
 """
 
-
-cuda = False
-if (torch.cuda.is_available()):
-    cuda = True
-
-n_samples = 5
+n_samples = 4
 batch_size = 2
-max_len = 10
+max_len = 15
 top_k = 100
 temperature = 1.0
 generation_mode = "parallel-sequential"
@@ -296,68 +51,25 @@ sample = True
 max_iter = 500
 
 # Choose the prefix context
-seed_text = "hello how are you".split()
+seed_text = "Wagner was a German composer , his inocuation was ambiguous .".split()
 len_seed = len(seed_text)
-bert_sents = generate(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
+bert_sents = ugen.generate(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
                       generation_mode=generation_mode,
                       sample=sample, top_k=top_k, temperature=temperature, burnin=burnin, max_iter=max_iter,
                       cuda=cuda)
 
 for sent in bert_sents:
-    printer(sent, should_detokenize=True)
-
-question = 1
-while question < 4:
-    print("\nyou can ask us 3 questions this is your '{}' sentence".format(question))
-    seed_text = input('\nEnter your Question here: ').strip()
-    seed_text = seed_text.split()
-    seed_len = len(seed_text)
-    bert_sents = generate_text(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
-                               sample=sample, top_k=top_k, temperature=temperature, cuda=cuda)
-    for sent in bert_sents:
-        printer(sent, should_detokenize=True, length_question=seed_len)
-
-    question += 1
-
-"""##  Evaluation
-We'll measure the diversity of our generated samples via self-BLEU: we compute corpus BLEU where for each generated sentence, we compute BLEU treating the other sentences as references. We also compute the percentage of  𝑛 -grams that are unique among the generations. We try some other strategies, including comparing to outside models, in our report, and you can see some of the code for that here.
-"""
-
-from collections import Counter
-from nltk.util import ngrams
-from nltk.translate import bleu_score as bleu
-
-
-def self_bleu(sents):
-    return bleu.corpus_bleu([[s for (j, s) in enumerate(sents) if j != i] for i in range(len(sents))], sents)
-
-
-def get_ngram_counts(sents, max_n=4):
-    size2count = {}
-    for i in range(1, max_n + 1):
-        size2count[i] = Counter([n for sent in sents for n in ngrams(sent, i)])
-    return size2count
-
-
-def self_unique_ngrams(preds, max_n=4):
-    # get # of pred ngrams with count 1
-    pct_unique = {}
-    pred_ngrams = get_ngram_counts(preds, max_n)
-    for i in range(1, max_n + 1):
-        n_unique = len([k for k, v in pred_ngrams[i].items() if v == 1])
-        total = sum(pred_ngrams[i].values())
-        pct_unique[i] = n_unique / total
-    return pct_unique
-
+    ugen.printer(sent, should_detokenize=True)
 
 max_n = 4
 
-for i in range(len(bert_sents)):
-  bert_sents[i] = bert_sents[i][len_seed:]
+# this produces BLEU of 0 (no 4-grams)
+#for i in range(len(bert_sents)):
+#  bert_sents[i] = bert_sents[i][len_seed:]
 
-print(bert_sents)
-print("BERT %s self-BLEU: %.2f" % (model_version, 100 * self_bleu(bert_sents)))
+#print(bert_sents)
+print("BERT %s self-BLEU: %.2f" % (model_path, 100 * ugen.self_bleu(bert_sents)))
 
-pct_uniques = self_unique_ngrams(bert_sents, max_n)
+pct_uniques = ugen.self_unique_ngrams(bert_sents, max_n)
 for i in range(1, max_n + 1):
-    print("BERT %s unique %d-grams relative to self: %.2f" % (model_version, i, 100 * pct_uniques[i]))
+    print("BERT %s unique %d-grams relative to self: %.2f" % (model_path, i, 100 * pct_uniques[i]))
