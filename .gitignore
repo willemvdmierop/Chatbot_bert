@@ -17,3 +17,6 @@ runs/bert_1585559483.108345/events.out.tfevents.1585559483.Willems-MacBook-Pro.l
 *.bin
 scibert_scivocab_uncased/Icon
 
+*.json
+model_scibert_lr0001_wd001_batch100_ep1_tmp/model_scibert_lr0001_wd001_batch100_ep10_tmp
+*.txt

@@ -37,7 +37,7 @@ epochs = 1
 scibert_train = True ############
 arxiv_train = False ##############
 ##################################
-
+tb = SummaryWriter(log_dir = 'runs/AdamW')
 ##########################
 ### Folder/File Naming ###
 ##########################
@@ -50,7 +50,7 @@ elif arxiv_train:
 else:
     dirname = '/model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
     lossname = '/loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs)
-dirname_tmp =  dirname + '_tmp'
+dirname =  dirname + '_tmp'
 dirname_final = dirname + '_final'
 
 ###########################
@@ -99,22 +99,29 @@ print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
 wd = os.getcwd()
 print('Loading BERT model...')
 if scibert_train:
-    print("Attention we are initializing the scibert model with scibert tokenizer!")
-    tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased', do_lower_case=True)
-    model_Q_A = BertForMaskedLM.from_pretrained('./scibert_scivocab_uncased')
-    # !Attention we need the full size of the new vocabulary!!
-    model_Q_A.resize_token_embeddings(len(tokenizer))
+    if os.path.exists(wd + dirname) and len(os.listdir(wd+dirname)) != 0:
+        print("Attention we are initializing the scibert model with an already trained scibert tokenizer!")
+        tokenizer = BertTokenizer.from_pretrained('./' + dirname, do_lower_case=True)
+        model_Q_A = BertForMaskedLM.from_pretrained('./' + dirname)
+        # !Attention we need the full size of the new vocabulary!!
+        model_Q_A.resize_token_embeddings(len(tokenizer))
+    elif len(os.listdir(wd+dirname)) == 0:
+        print("Attention we are initializing the scibert model with scibert tokenizer!")
+        tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased', do_lower_case=True)
+        model_Q_A = BertForMaskedLM.from_pretrained('./scibert_scivocab_uncased')
+        # !Attention we need the full size of the new vocabulary!!
+        model_Q_A.resize_token_embeddings(len(tokenizer))
+    else:
+        print("Attention we are initializing the scibert model with scibert tokenizer!")
+        tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased', do_lower_case=True)
+        model_Q_A = BertForMaskedLM.from_pretrained('./scibert_scivocab_uncased')
+        # !Attention we need the full size of the new vocabulary!!
+        model_Q_A.resize_token_embeddings(len(tokenizer))
 # TODO : add loading of arxiv model
 else:
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
     model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
 model_Q_A.to(device)
-if not os.path.exists(wd + dirname_tmp):
-    os.mkdir(wd + dirname_tmp)
-if not os.path.exists(wd + dirname_final):
-    os.mkdir(wd + dirname_final)
-    
-
 
 params = list(model_Q_A.named_parameters())
 print('The BERT model_Q_A has {:} different named parameters.\n'.format(len(params)))
@@ -132,7 +139,7 @@ for p in params[-4:]:
 print('\n' + 40 * '#', "Training on dataset", 40 * '#')
 ############################ Training the Question and answer dataset Model #########################
 
-tb = SummaryWriter()
+
 
 optim_pars = {'lr': lrate, 'weight_decay': w_decay}
 optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
@@ -140,7 +147,13 @@ optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
 current_batch = 0
 total_phrase_pairs = 0
 loss_list = []
-for epoch in range(epochs):
+e = 0
+if os.path.exists(dirname + '.pth'):
+    checkpoint = torch.load(dirname+'.pth')
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    e = checkpoint['epoch']
+    loss = checkpoint['loss']
+for epoch in range(e, epochs):
     t0 = time.time()
     print(30 * "#" + ' Training ' + 30 * "#")
     print('======== Epoch {:} / {:} ========'.format(epoch + 1, epochs))
@@ -182,10 +195,15 @@ for epoch in range(epochs):
 
     average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)
-    model_Q_A.save_pretrained(wd + dirname_tmp)
+    tokenizer.save_pretrained(wd + dirname)
+    model_Q_A.save_pretrained(wd + dirname)
+    torch.save({
+        'epoch': epoch,
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss':loss,
+    }, dirname + '.pth')
     print("average loss '{}' and train time '{}'".format(average_loss, (time.time() - t0)))
 
 tb.close()
-model_Q_A.save_pretrained(wd + dirname_final)
 
 
