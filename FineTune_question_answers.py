@@ -81,7 +81,7 @@ mean_length_a /= len(answer_data)
 
 end = time.time()
 print("\n" + 96 * '#')
-print('Total data preprocessing time is {0:.2f} and the length of the vocabulary is {1:d}'.format(end - start, len(question_data)))
+print('Total data preprocessing time is {0:.2f} and the length of the dataset is {1:d}'.format(end - start, len(question_data)))
 print('## Question data[0] : {} , \n## Answer data[0] :  {}'.format(question_data[0], answer_data[0]))
 print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
 print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
@@ -153,7 +153,7 @@ e = 0
 if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     checkpoint = torch.load(os.path.join(dirname,'checkpoint.pth'))
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    e = checkpoint['epoch']
+    e = checkpoint['epoch'] + 1
     loss_list = checkpoint['loss_list']
 
 for epoch in range(e, epochs):
