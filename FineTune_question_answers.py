@@ -209,7 +209,7 @@ for epoch in range(e, epochs):
 
 tb.close()
 ### Save final trained model/optimizer
-#if not os.path.exists(dirname_final): os.mkdir(dirname_final) 
+if not os.path.exists(dirname_final): os.mkdir(dirname_final) 
 tokenizer.save_pretrained(dirname_final)
 model_Q_A.save_pretrained(dirname_final)
 
