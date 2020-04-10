@@ -31,10 +31,10 @@ lrate = 1e-4
 lrate_str = '0001'
 w_decay = 1e-3
 w_decay_str = '001'
-epochs = 2
+epochs = 10
 
 ######## SCIBERT /ARXIV ##########
-scibert_train = False ############
+scibert_train = True ############
 arxiv_train = False ##############
 ##################################
 
@@ -65,6 +65,7 @@ END_TOKEN = "</S>"
 
 question_data, answer_data = utils.question_answers_dataset()
 
+'''
 max_length_questions = 0
 mean_length_q = 0
 for i in range(len(question_data)):
@@ -86,6 +87,7 @@ print('## Question data[0] : {} , \n## Answer data[0] :  {}'.format(question_dat
 print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
 print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
 print(96 * '#')
+'''
 
 
 def load_data(**train_pars):
@@ -112,8 +114,8 @@ else:
     if not os.path.exists(dirname): os.mkdir(dirname)    
     if scibert_train:
         print("Attention we are initializing the scibert model with scibert tokenizer!")
-        tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased', do_lower_case=True)
-        model_Q_A = BertForMaskedLM.from_pretrained('./scibert_scivocab_uncased')
+        tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased_cornell', do_lower_case=True)
+        model_Q_A = BertForMaskedLM.from_pretrained('allenai/scibert_scivocab_uncased')
         # !Attention we need the full size of the new vocabulary!!
         model_Q_A.resize_token_embeddings(len(tokenizer))
     # elif arxiv_train:

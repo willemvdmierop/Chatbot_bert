@@ -24,7 +24,7 @@ class MoviePhrasesData(data.Dataset):
         self.start_token = start_token
         self.sep_token = sep_token
         if scibert:
-            self.tokenizer = BertTokenizer.from_pretrained("./scibert_scivocab_uncased")  # make sure this
+            self.tokenizer = BertTokenizer.from_pretrained("./scibert_scivocab_uncased_cornell")  # make sure this
             # is our scibert combined with our cornell tokenizer == yes
         else:
             self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
