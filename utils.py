@@ -1,6 +1,9 @@
 import os, sys, re
 from collections import OrderedDict
 import time
+import string
+import torch
+import copy
 
 
 def load_lines(file):
@@ -78,7 +81,7 @@ def create_dialogue_dataset():
 
     return full_list
 
-import string
+
 def create_vocab():
     #movie_lines = loaded_lines
     all_movie_lines = all_lines
@@ -95,7 +98,7 @@ def create_vocab():
 
     return sorted(vocab)
 
-def print_dialogue_data_metrics(self, question_data, answer_data):
+def print_dialogue_data_metrics(question_data, answer_data):
     max_length_questions = 0
     mean_length_q = 0
     for i in range(len(question_data)):
@@ -115,3 +118,26 @@ def print_dialogue_data_metrics(self, question_data, answer_data):
     print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
     print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
     print(96 * '#')
+
+def make_input(question, answer, tokenizer):
+    kwargs = {'text': question,
+                  'text_pair': answer,
+                  'max_length': 40,
+                  'pad_to_max_length': True,
+                  'add_special_tokens': True,
+                  'return_tensors': 'pt',
+                  'return_token_type_ids': True,
+                  'return_attention_mask': True,
+                  'return_special_tokens_mask': True}
+    input_phrase = tokenizer.encode_plus(**kwargs)
+    masked_lm_labels_temp = -100 * (
+                torch.ones(len(input_phrase['attention_mask'])) - input_phrase['token_type_ids'] == 1)
+    masked_lm_labels = (input_phrase['token_type_ids']*input_phrase['input_ids']) + masked_lm_labels_temp
+    input_phrase['attention_mask'] = copy.deepcopy(masked_lm_labels) / -100
+    new_input_eval = copy.deepcopy(input_phrase['input_ids'])
+    new_input_eval[
+        (input_phrase['attention_mask'] - input_phrase['token_type_ids']) == 0] = tokenizer.convert_tokens_to_ids(
+        '[MASK]')
+    input_phrase['masked_lm_labels'] = masked_lm_labels
+    input_phrase['new_input_eval'] = new_input_eval
+    return input_phrase

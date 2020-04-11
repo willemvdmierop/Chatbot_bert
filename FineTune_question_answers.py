@@ -56,26 +56,6 @@ dirname =  os.path.join(wd,dirname + '_tmp')
 
 tb = SummaryWriter(log_dir = 'runs/AdamW')
 
-###########################
-
-start = time.time()
-OOV = '<UNK>'
-START_TOKEN = "<S>"
-END_TOKEN = "</S>"
-
-question_data, answer_data = utils.question_answers_dataset()
-
-#cornell_vocab = utils.create_vocab() #use this for dynamic creation of vocabulary (but takes long time)
-with open('simp_cornell_vocab.txt', 'r') as f:
-   cornell_vocab = [word.rstrip('\n') for word in f]
-
-end = time.time()
-print('Total data preprocessing time is {0:.2f} and the length of the dataset is {1:d}'.format(end - start, len(question_data)))
-'''
-utils.print_dialogue_data_metrics(question_data, answer_data)
-'''
-
-
 
 #################################### Load the BERT tokenizer. ########################################
 
@@ -92,26 +72,26 @@ else:
     if scibert_train:
         print("Attention we are initializing the scibert model with extended scibert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', do_lower_case=True)
-        num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
+        #num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('allenai/scibert_scivocab_uncased')
         # !Attention we need the full size of the new vocabulary!!
-        model_Q_A.resize_token_embeddings(len(tokenizer))
+        #model_Q_A.resize_token_embeddings(len(tokenizer))
     # elif arxiv_train:
     #   TODO : add loading of arxiv model
     elif arxiv_train:
         print("Attention we are initializing the arxiv model with extended arxiv tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('lysandre/arxiv', do_lower_case=True)
-        num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
+        #num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('lysandre/arxiv')
         # !Attention we need the full size of the new vocabulary!!
-        model_Q_A.resize_token_embeddings(len(tokenizer))
+        #model_Q_A.resize_token_embeddings(len(tokenizer))
     else:
         print("Attention we are initializing the bert model with extended bert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-        num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
+        #num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
         # !Attention we need the full size of the new vocabulary!!
-        model_Q_A.resize_token_embeddings(len(tokenizer))
+        #model_Q_A.resize_token_embeddings(len(tokenizer))
 
 model_Q_A.to(device)
 
@@ -127,6 +107,25 @@ for p in params[5:21]:
 print('\n======= Output Layer =======\n')
 for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
+'''
+
+################################# Load Cornell Data ##################################
+
+start = time.time()
+OOV = '<UNK>'
+START_TOKEN = "<S>"
+END_TOKEN = "</S>"
+
+question_data, answer_data = utils.question_answers_dataset()
+
+#cornell_vocab = utils.create_vocab() #use this for dynamic creation of vocabulary (but takes long time)
+#with open('simp_cornell_vocab.txt', 'r') as f:
+#   cornell_vocab = [word.rstrip('\n') for word in f]
+
+end = time.time()
+print('Total data preprocessing time is {0:.2f} and the length of the dataset is {1:d}'.format(end - start, len(question_data)))
+'''
+utils.print_dialogue_data_metrics(question_data, answer_data)
 '''
 
 def load_data(**train_pars):
@@ -192,7 +191,7 @@ for epoch in range(e, epochs):
         total_loss += loss
         loss.backward()
         optimizer.step()
-        optimizer.zero_grad()
+        #optimizer.zero_grad() #not necessary since optimizer made from model parameters and we zero_grad the model at start of iteration
         counter += 1
         tb.add_scalar(lossname, loss, epoch)
         if counter % 400 == 0:

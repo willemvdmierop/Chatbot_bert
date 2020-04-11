@@ -1,7 +1,4 @@
-import torch
-import torch.utils
 from torch.utils import data
-from transformers import BertTokenizer
 import copy
 import utils
 
@@ -22,6 +19,8 @@ class MoviePhrasesData(data.Dataset):
     def load_ques_answ(self, idx):
         question = self.questions_data[idx]
         answer = self.answers_data[idx]
+        input_phrase = utils.make_input(question,answer, self.tokenizer)
+        '''
         kwargs = {'text': question,
                   'text_pair': answer,
                   'max_length': 40,
@@ -42,7 +41,9 @@ class MoviePhrasesData(data.Dataset):
             '[MASK]')
         input_phrase['masked_lm_labels'] = masked_lm_labels
         input_phrase['new_input_eval'] = new_input_eval
+        '''
         return input_phrase
+        
 
     # number of dialogues, 83097
     def __len__(self):

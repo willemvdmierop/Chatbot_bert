@@ -14,8 +14,10 @@ if (torch.cuda.is_available()):
 
 # Load the BERT tokenizer.
 print('Loading BERT model...')
-model_path = "./model_bert_lr0001_wd001_batch100_ep40_final_AdamW"
-tokenizer_path = "bert-base-uncased"
+model_path = 'bert-base-uncased'
+tokenizer_path = 'bert-base-uncased'
+#model_path = 'allenai/scibert_scivocab_uncased'
+#tokenizer_path = 'allenai/scibert_scivocab_uncased'
 ugen.load_model_tokenizer(model_path = model_path, tokenizer_path = tokenizer_path)
 
 
@@ -40,7 +42,7 @@ sample = True
 max_iter = 500
 
 # Choose the prefix context
-seed_text = "Wagner was a German composer , his inoculation was ambiguous .".lower().split()
+seed_text = ugen.tokenizer.tokenize("Wagner was a German composer, his inoculation was ambiguous.".lower())
 len_seed = len(seed_text)
 bert_sents = ugen.generate(n_samples, seed_text=seed_text, batch_size=batch_size, max_len=max_len,
                       generation_mode=generation_mode,

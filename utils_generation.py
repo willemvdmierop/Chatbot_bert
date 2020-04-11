@@ -78,19 +78,19 @@ def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_
 
 def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
     # get initial sentence by padding seed_text with either masks or random words to max_len
-    batch = [seed_text + [SEP] +  [MASK] * max_len + [SEP] for _ in range(batch_size)]
+    batch = [[CLS] + seed_text + [SEP] +  [MASK] * max_len + [SEP] for _ in range(batch_size)]
     return tokenize_batch(batch)
 
 
-def printer(sent, should_detokenize=True, length_question=1):
+def printer(sent, should_detokenize=True, length_question=0):
     if should_detokenize:
-        sent = detokenize(sent)[length_question:-1]  # [CLS] and [SEP] don't need to be detokenized
+        sent = detokenize(sent)[length_question:]  # [CLS] and [SEP] don't need to be detokenized
     print(" ".join(sent))
 
 
 def sequential_generation(seed_text, batch_size=10, max_len=15, leed_out_len=15,
                           top_k=0, temperature=None, sample=False, cuda=True):
-    seed_len = len(seed_text)
+    seed_len = len(seed_text)+2
     batch = get_init_text(seed_text, max_len, batch_size)
 
     for i in range(max_len):
@@ -113,7 +113,7 @@ def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0
     args:
         - burnin: during burn-in period, sample from full distribution; afterwards take argmax
     """
-    seed_len = len(seed_text)
+    seed_len = len(seed_text)+2
     batch = get_init_text(seed_text, max_len, batch_size)
 
     for ii in range(max_iter):
@@ -168,7 +168,7 @@ def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
                                                    cuda=cuda, verbose=False)
         elif generation_mode == "sequential":
             batch = sequential_generation(seed_text, batch_size=batch_size, max_len=max_len, top_k=top_k,
-                                          temperature=temperature, leed_out_len=leed_out_len, sample=sample,
+                                          temperature=temperature, sample=sample,
                                           cuda=cuda)
         if (batch_n + 1) % print_every == 0:
             print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
@@ -198,3 +198,23 @@ def self_unique_ngrams(preds, max_n=4):
         total = sum(pred_ngrams[i].values())
         pct_unique[i] = n_unique / total
     return pct_unique
+
+'''
+load_model_tokenizer(model_path='bert-base-uncased',tokenizer_path='bert-base-uncased')
+
+with open('simp_cornell_vocab.txt', 'r') as f:
+   cornell_vocab = [word.rstrip('\n') for word in f]
+num_unk = 0
+tokenized_cornell = []
+for w in cornell_vocab:
+    tokenized_cornell.append(tokenizer.tokenize(w))
+
+
+toks_batch = tokenize_batch(tokenized_cornell)
+for idx, tok in enumerate(toks_batch):
+    word = cornell_vocab[idx]
+    t = tokenized_cornell[idx]
+    if tokenizer.unk_token_id in tok: num_unk += 1
+#print(untokenize_batch(tok))
+print(num_unk)
+'''
