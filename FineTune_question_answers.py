@@ -65,41 +65,18 @@ END_TOKEN = "</S>"
 
 question_data, answer_data = utils.question_answers_dataset()
 
-'''
-max_length_questions = 0
-mean_length_q = 0
-for i in range(len(question_data)):
-    max_length_questions = max(max_length_questions, len(question_data[i]))
-    mean_length_q += len(question_data[i])
-mean_length_q /= len(question_data)
-
-mean_length_a = 0
-max_length_answers = 0
-for i in range(len(answer_data)):
-    max_length_answers = max(max_length_answers, len(answer_data[i]))
-    mean_length_a += len(answer_data[i])
-mean_length_a /= len(answer_data)
+#cornell_vocab = utils.create_vocab() #use this for dynamic creation of vocabulary (but takes long time)
+with open('simp_cornell_vocab.txt', 'r') as f:
+   cornell_vocab = [word.rstrip('\n') for word in f]
 
 end = time.time()
-print("\n" + 96 * '#')
 print('Total data preprocessing time is {0:.2f} and the length of the dataset is {1:d}'.format(end - start, len(question_data)))
-print('## Question data[0] : {} , \n## Answer data[0] :  {}'.format(question_data[0], answer_data[0]))
-print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
-print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
-print(96 * '#')
+'''
+utils.print_dialogue_data_metrics(question_data, answer_data)
 '''
 
 
-def load_data(**train_pars):
-    stage = train_pars['stage']
-    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data, scibert = scibert_train)
-    train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
-    dataloader = DataLoader(data, **train_dataset_params)
-    return dataloader
 
-load_data_pars = {'stage': 'train', 'num_workers': 3}
-dataLoader = load_data(**load_data_pars)  # this returns a dataloader
-print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
 #################################### Load the BERT tokenizer. ########################################
 
 print('Loading BERT model...')
@@ -109,21 +86,33 @@ if os.path.exists(dirname) and len(os.listdir(dirname)) != 0:
     tokenizer = BertTokenizer.from_pretrained(dirname, do_lower_case=True)
     model_Q_A = BertForMaskedLM.from_pretrained(dirname)
     # !Attention we need the full size of the new vocabulary!!
-    model_Q_A.resize_token_embeddings(len(tokenizer))
+    #model_Q_A.resize_token_embeddings(len(tokenizer)) #should already be extended from first initialization
 else:
     if not os.path.exists(dirname): os.mkdir(dirname)    
     if scibert_train:
-        print("Attention we are initializing the scibert model with scibert tokenizer!")
-        tokenizer = BertTokenizer.from_pretrained('./scibert_scivocab_uncased_cornell', do_lower_case=True)
+        print("Attention we are initializing the scibert model with extended scibert tokenizer!")
+        tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', do_lower_case=True)
+        num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('allenai/scibert_scivocab_uncased')
         # !Attention we need the full size of the new vocabulary!!
         model_Q_A.resize_token_embeddings(len(tokenizer))
     # elif arxiv_train:
     #   TODO : add loading of arxiv model
+    elif arxiv_train:
+        print("Attention we are initializing the arxiv model with extended arxiv tokenizer!")
+        tokenizer = BertTokenizer.from_pretrained('lysandre/arxiv', do_lower_case=True)
+        num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
+        model_Q_A = BertForMaskedLM.from_pretrained('lysandre/arxiv')
+        # !Attention we need the full size of the new vocabulary!!
+        model_Q_A.resize_token_embeddings(len(tokenizer))
     else:
-        print("Attention we are initializing the bert model with bert tokenizer!")
+        print("Attention we are initializing the bert model with extended bert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+        num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
+        # !Attention we need the full size of the new vocabulary!!
+        model_Q_A.resize_token_embeddings(len(tokenizer))
+
 model_Q_A.to(device)
 
 params = list(model_Q_A.named_parameters())
@@ -140,9 +129,20 @@ for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 '''
 
-print('\n' + 40 * '#', "Training on dataset", 40 * '#')
-############################ Training the Question and answer dataset Model #########################
+def load_data(**train_pars):
+    stage = train_pars['stage']
+    data = dataset.MoviePhrasesData(questions_data= question_data, answers_data = answer_data, tokenizer = tokenizer)
+    train_dataset_params = {'batch_size': minibatch_size, 'shuffle': True}
+    dataloader = DataLoader(data, **train_dataset_params)
+    return dataloader
 
+load_data_pars = {'stage': 'train', 'num_workers': 3}
+dataLoader = load_data(**load_data_pars)  # this returns a dataloader
+#print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
+
+
+############################ Training the Question and answer dataset Model #########################
+print('\n' + 40 * '#', "Training on dataset", 40 * '#')
 
 
 optim_pars = {'lr': lrate, 'weight_decay': w_decay}

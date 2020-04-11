@@ -10,26 +10,16 @@ class MoviePhrasesData(data.Dataset):
 
     # voc: vocabulary, word:idx
     # all dialogues:
-    def __init__(self, all_dialogues=None, questions_data=None, answers_data=None, max_seq_len=40, unk_token='<UNK>',
-                 start_token='<S>', end_token='</S>',
-                 sep_token='<SEP>', scibert=False):
+    def __init__(self, all_dialogues=None, questions_data=None, answers_data=None, max_seq_len=40, tokenizer = None):
         super(MoviePhrasesData, self).__init__()
         self.max_seq_len = max_seq_len
         # self.voc = voc
         self.all_dialogues = all_dialogues
         self.questions_data = questions_data
         self.answers_data = answers_data
-        self.unk_token = unk_token
-        self.end_token = end_token
-        self.start_token = start_token
-        self.sep_token = sep_token
-        if scibert:
-            self.tokenizer = BertTokenizer.from_pretrained("./scibert_scivocab_uncased_cornell")  # make sure this
-            # is our scibert combined with our cornell tokenizer == yes
-        else:
-            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.tokenizer = tokenizer
+        
     def load_ques_answ(self, idx):
-        tokenizer = self.tokenizer
         question = self.questions_data[idx]
         answer = self.answers_data[idx]
         kwargs = {'text': question,
@@ -41,14 +31,14 @@ class MoviePhrasesData(data.Dataset):
                   'return_token_type_ids': True,
                   'return_attention_mask': True,
                   'return_special_tokens_mask': True}
-        input_phrase = tokenizer.encode_plus(**kwargs)
+        input_phrase = self.tokenizer.encode_plus(**kwargs)
         masked_lm_labels_temp = -100 * (
                     torch.ones(len(input_phrase['attention_mask'])) - input_phrase['token_type_ids'] == 1)
         masked_lm_labels = (input_phrase['token_type_ids']*input_phrase['input_ids']) + masked_lm_labels_temp
         input_phrase['attention_mask'] = copy.deepcopy(masked_lm_labels) / -100
         new_input_eval = copy.deepcopy(input_phrase['input_ids'])
         new_input_eval[
-            (input_phrase['attention_mask'] - input_phrase['token_type_ids']) == 0] = tokenizer.convert_tokens_to_ids(
+            (input_phrase['attention_mask'] - input_phrase['token_type_ids']) == 0] = self.tokenizer.convert_tokens_to_ids(
             '[MASK]')
         input_phrase['masked_lm_labels'] = masked_lm_labels
         input_phrase['new_input_eval'] = new_input_eval
@@ -62,5 +52,5 @@ class MoviePhrasesData(data.Dataset):
             return len(self.questions_data)
 
     def __getitem__(self, idx):
-        self.phrase = self.load_ques_answ(idx)
-        return self.phrase
+        phrase = self.load_ques_answ(idx)
+        return phrase

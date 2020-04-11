@@ -1,5 +1,6 @@
 import os, sys, re
 from collections import OrderedDict
+import time
 
 
 def load_lines(file):
@@ -77,18 +78,40 @@ def create_dialogue_dataset():
 
     return full_list
 
-
+import string
 def create_vocab():
-    movie_lines = loaded_lines
+    #movie_lines = loaded_lines
     all_movie_lines = all_lines
     vocab = []
     for k in all_movie_lines.keys():
         phrase = all_movie_lines[k]
         # get the list of trimmed tokens - get rid of non-letter chars
-        phrase_trimmed = re.sub('\W+', ' ', phrase).split()
+        phrase_trimmed = re.sub(r'[^a-zA-Z\s]+|(.)\1{3,}', ' ', phrase).lower().split()
+        #phrase_trimmed = [word.strip(string.punctuation) for word in phrase.lower().split()]
         # print(phrase_trimmed)
         for w in phrase_trimmed:
             if not w in vocab:
                 vocab.append(w)
 
     return sorted(vocab)
+
+def print_dialogue_data_metrics(self, question_data, answer_data):
+    max_length_questions = 0
+    mean_length_q = 0
+    for i in range(len(question_data)):
+        max_length_questions = max(max_length_questions, len(question_data[i]))
+        mean_length_q += len(question_data[i])
+    mean_length_q /= len(question_data)
+
+    mean_length_a = 0
+    max_length_answers = 0
+    for i in range(len(answer_data)):
+        max_length_answers = max(max_length_answers, len(answer_data[i]))
+        mean_length_a += len(answer_data[i])
+    mean_length_a /= len(answer_data)
+
+    print("\n" + 96 * '#')
+    print('## Question data[0] : {} , \n## Answer data[0] :  {}'.format(question_data[0], answer_data[0]))
+    print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
+    print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
+    print(96 * '#')
