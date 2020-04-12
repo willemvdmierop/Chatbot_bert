@@ -25,6 +25,9 @@ def load_model_tokenizer(model_path = 'bert-base-uncased', tokenizer_path = 'ber
     model = model.to(device)
     params = list(model.named_parameters())
     print('The BERT model has {:} different named parameters.\n'.format(len(params)))
+    print('======= Embedding Layer =======\n')
+    for p in params[0:5]:
+        print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
     mask_id = tokenizer.convert_tokens_to_ids([MASK])[0]
     sep_id = tokenizer.convert_tokens_to_ids([SEP])[0]
     cls_id = tokenizer.convert_tokens_to_ids([CLS])[0]
