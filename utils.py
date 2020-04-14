@@ -135,7 +135,7 @@ def save_data_csv(question_data, answer_data):
 
     array_a = []
     for _, value in enumerate(answer_data):
-        array_q.append(answer_data[value])
+        array_a.append(answer_data[value])
 
     df = pd.DataFrame(array_a)
     df.to_csv("answer_data.csv")
