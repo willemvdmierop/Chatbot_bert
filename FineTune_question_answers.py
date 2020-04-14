@@ -27,15 +27,15 @@ if (torch.cuda.is_available()):
 #################################
 
 max_phrase_length = 40
-minibatch_size = 200
+minibatch_size = 20
 lrate = 1e-4
 lrate_str = '0001'
 w_decay = 1e-3
 w_decay_str = '001'
-epochs = 10
+epochs = 2
 
 ######## SCIBERT /ARXIV ##########
-scibert_train = True ############
+scibert_train = False ############
 arxiv_train = False ##############
 ##################################
 
@@ -119,7 +119,7 @@ END_TOKEN = "</S>"
 
 question_data, answer_data = utils.question_answers_dataset()
 
-utils.save_data_csv(question_data,answer_data)
+#utils.save_data_csv(question_data,answer_data)
 #cornell_vocab = utils.create_vocab() #use this for dynamic creation of vocabulary (but takes long time)
 #with open('simp_cornell_vocab.txt', 'r') as f:
 #   cornell_vocab = [word.rstrip('\n') for word in f]

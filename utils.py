@@ -37,10 +37,9 @@ def load_dialogues(file):
 
 def question_answers_dataset():
     all_movie_lines = all_lines
-    questions_dic = {}
-    answers_dic = {}
+    questions_dic = []
+    answers_dic = []
     movie_dialogues = load_dialogues("movie_conversations.txt")
-    count = 0
     for idx, dialogue in enumerate(movie_dialogues):
         phrases = dialogue[-1]
         phrases = re.split('\W+', phrases)[1:-1]
@@ -51,9 +50,9 @@ def question_answers_dataset():
         for id, ph in enumerate(phrases[:-1]):
             question = all_movie_lines[phrases[id]]
             answer = all_movie_lines[phrases[id + 1]]
-            questions_dic[count] = question
-            answers_dic[count] = answer
-            count += 1
+            if len(question.split()) <= 20 and len(answer.split()) <= 20:
+                questions_dic.append(question)
+                answers_dic.append(answer)
 
     return questions_dic, answers_dic
 
