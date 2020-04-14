@@ -4,6 +4,7 @@ import time
 import string
 import torch
 import copy
+import pandas as pd
 
 
 def load_lines(file):
@@ -83,20 +84,21 @@ def create_dialogue_dataset():
 
 
 def create_vocab():
-    #movie_lines = loaded_lines
+    # movie_lines = loaded_lines
     all_movie_lines = all_lines
     vocab = []
     for k in all_movie_lines.keys():
         phrase = all_movie_lines[k]
         # get the list of trimmed tokens - get rid of non-letter chars
         phrase_trimmed = re.sub(r'[^a-zA-Z\s]+|(.)\1{3,}', ' ', phrase).lower().split()
-        #phrase_trimmed = [word.strip(string.punctuation) for word in phrase.lower().split()]
+        # phrase_trimmed = [word.strip(string.punctuation) for word in phrase.lower().split()]
         # print(phrase_trimmed)
         for w in phrase_trimmed:
             if not w in vocab:
                 vocab.append(w)
 
     return sorted(vocab)
+
 
 def print_dialogue_data_metrics(question_data, answer_data):
     max_length_questions = 0
@@ -115,24 +117,44 @@ def print_dialogue_data_metrics(question_data, answer_data):
 
     print("\n" + 96 * '#')
     print('## Question data[0] : {} , \n## Answer data[0] :  {}'.format(question_data[0], answer_data[0]))
-    print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions, max_length_answers))
-    print('The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q, mean_length_a))
+    print('The max lenght of the Questions is: {}, the max length of the answers is: {}'.format(max_length_questions,
+                                                                                                max_length_answers))
+    print(
+        'The mean lenght of the Questions is: {0:.2f}, the mean length of the answers is: {1:.2f}'.format(mean_length_q,
+                                                                                                          mean_length_a))
     print(96 * '#')
+
+
+def save_data_csv(question_data, answer_data):
+    array_q = []
+    for _, value in enumerate(question_data):
+        array_q.append(question_data[value])
+
+    df = pd.DataFrame(array_q)
+    df.to_csv("question_data.csv")
+
+    array_a = []
+    for _, value in enumerate(answer_data):
+        array_q.append(answer_data[value])
+
+    df = pd.DataFrame(array_a)
+    df.to_csv("answer_data.csv")
+
 
 def make_input(question, answer, tokenizer):
     kwargs = {'text': question,
-                  'text_pair': answer,
-                  'max_length': 40,
-                  'pad_to_max_length': True,
-                  'add_special_tokens': True,
-                  'return_tensors': 'pt',
-                  'return_token_type_ids': True,
-                  'return_attention_mask': True,
-                  'return_special_tokens_mask': True}
+              'text_pair': answer,
+              'max_length': 40,
+              'pad_to_max_length': True,
+              'add_special_tokens': True,
+              'return_tensors': 'pt',
+              'return_token_type_ids': True,
+              'return_attention_mask': True,
+              'return_special_tokens_mask': True}
     input_phrase = tokenizer.encode_plus(**kwargs)
     masked_lm_labels_temp = -100 * (
-                torch.ones(len(input_phrase['attention_mask'])) - input_phrase['token_type_ids'] == 1)
-    masked_lm_labels = (input_phrase['token_type_ids']*input_phrase['input_ids']) + masked_lm_labels_temp
+            torch.ones(len(input_phrase['attention_mask'])) - input_phrase['token_type_ids'] == 1)
+    masked_lm_labels = (input_phrase['token_type_ids'] * input_phrase['input_ids']) + masked_lm_labels_temp
     input_phrase['attention_mask'] = copy.deepcopy(masked_lm_labels) / -100
     new_input_eval = copy.deepcopy(input_phrase['input_ids'])
     new_input_eval[

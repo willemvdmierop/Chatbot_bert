@@ -15,7 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 import utils
 import dataset_Q_A as dataset
 import numpy as np
-
+import pandas as pd
+import pickle
 device = 'cpu'
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
@@ -118,6 +119,7 @@ END_TOKEN = "</S>"
 
 question_data, answer_data = utils.question_answers_dataset()
 
+utils.save_data_csv(question_data,answer_data)
 #cornell_vocab = utils.create_vocab() #use this for dynamic creation of vocabulary (but takes long time)
 #with open('simp_cornell_vocab.txt', 'r') as f:
 #   cornell_vocab = [word.rstrip('\n') for word in f]
