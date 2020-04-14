@@ -85,9 +85,9 @@ def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
     return tokenize_batch(batch)
 
 
-def printer(sent, should_detokenize=True, length_question=0):
+def printer(sent, should_detokenize=True):
     if should_detokenize:
-        sent = detokenize(sent)[length_question:]  # [CLS] and [SEP] don't need to be detokenized
+        sent = detokenize(sent) # [CLS] and [SEP] don't need to be detokenized
     print(" ".join(sent))
 
 
@@ -138,7 +138,7 @@ def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0
 
     return untokenize_batch(batch)
 
-
+'''
 def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
                   sample=False, top_k=100, temperature=1.0, cuda=True, print_every=1):
     sentences = []
@@ -155,7 +155,7 @@ def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
         sentences += batch
     return sentences
 
-
+'''
 def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
              generation_mode="parallel-sequential",
              sample=True, top_k=100, temperature=1.0, burnin=200, max_iter=500,
@@ -174,7 +174,7 @@ def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
                                           temperature=temperature, sample=sample,
                                           cuda=cuda)
         if (batch_n + 1) % print_every == 0:
-            print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
+            print("Finished batch %d in %.3f minutes" % (batch_n + 1, (time.time() - start_time)/60))
             start_time = time.time()
 
         sentences += batch
