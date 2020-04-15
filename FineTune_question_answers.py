@@ -230,7 +230,7 @@ for epoch in range(e, epochs):
                     bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
                                                           n_samples=n_samples, top_k=top_k,
                                                           temperature=temperature, max_len=max_len, cuda=cuda)
-                    Q1_metrics.append([bleu, P, R, F1])
+                    Q1_metrics.append([bleu, P, R, F1,epoch])
                 elif question == 2:
                     seed_text = tokenizer.tokenize("are you okay?".lower())
                     refs = q2_refs
@@ -238,7 +238,7 @@ for epoch in range(e, epochs):
                                                           n_samples=n_samples,
                                                           top_k=top_k, temperature=temperature, max_len=max_len,
                                                           cuda=cuda)
-                    Q2_metrics.append([bleu, P, R, F1])
+                    Q2_metrics.append([bleu, P, R, F1, epoch])
                 elif question == 3:
                     seed_text = tokenizer.tokenize("why?".lower())
                     refs = q3_refs
@@ -246,7 +246,7 @@ for epoch in range(e, epochs):
                                                           n_samples=n_samples,
                                                           top_k=top_k, temperature=temperature, max_len=max_len,
                                                           cuda=cuda)
-                    Q3_metrics.append([bleu, P, R, F1])
+                    Q3_metrics.append([bleu, P, R, F1, epoch])
 
             metrics = {'Q1': Q1_metrics, 'Q2': Q2_metrics, 'Q3': Q3_metrics}
             with open('metrics_Q.pkl', 'wb') as myfile:
@@ -259,19 +259,19 @@ for epoch in range(e, epochs):
             refs = q1_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,top_k=top_k,
                                                   temperature=temperature, max_len=max_len, cuda=cuda)
-            Q1_metrics.append([bleu, P, R, F1])
+            Q1_metrics.append([bleu, P, R, F1, epoch])
         elif question == 2:
             seed_text = tokenizer.tokenize("are you okay?".lower())
             refs = q2_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
                                                   top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
-            Q2_metrics.append([bleu, P, R, F1])
+            Q2_metrics.append([bleu, P, R, F1, epoch])
         elif question == 3:
             seed_text = tokenizer.tokenize("why?".lower())
             refs = q3_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
                                                   top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
-            Q3_metrics.append([bleu, P, R, F1])
+            Q3_metrics.append([bleu, P, R, F1, epoch])
 
     metrics = {'Q1': Q1_metrics, 'Q2': Q2_metrics, 'Q3': Q3_metrics}
     with open('metrics_Q.pkl', 'wb') as myfile:
