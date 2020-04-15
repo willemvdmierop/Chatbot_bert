@@ -221,8 +221,37 @@ for epoch in range(e, epochs):
         #optimizer.zero_grad() #not necessary since optimizer made from model parameters and we zero_grad the model at start of iteration
         counter += 1
         tb.add_scalar(lossname, loss, epoch)
-        if counter % 400 == 0:
-            print("*", end='')
+        if counter % 42 == 0:
+            for i in range(1, 4):
+                question = i
+                if question == 1:
+                    seed_text = tokenizer.tokenize("who is she?".lower())
+                    refs = q1_refs
+                    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
+                                                          n_samples=n_samples, top_k=top_k,
+                                                          temperature=temperature, max_len=max_len, cuda=cuda)
+                    Q1_metrics.append([bleu, P, R, F1])
+                elif question == 2:
+                    seed_text = tokenizer.tokenize("are you okay?".lower())
+                    refs = q2_refs
+                    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
+                                                          n_samples=n_samples,
+                                                          top_k=top_k, temperature=temperature, max_len=max_len,
+                                                          cuda=cuda)
+                    Q2_metrics.append([bleu, P, R, F1])
+                elif question == 3:
+                    seed_text = tokenizer.tokenize("why?".lower())
+                    refs = q3_refs
+                    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
+                                                          n_samples=n_samples,
+                                                          top_k=top_k, temperature=temperature, max_len=max_len,
+                                                          cuda=cuda)
+                    Q3_metrics.append([bleu, P, R, F1])
+
+            metrics = {'Q1': Q1_metrics, 'Q2': Q2_metrics, 'Q3': Q3_metrics}
+            with open('metrics_Q.pkl', 'wb') as myfile:
+                pickle.dump(metrics, myfile)
+
     for i in range(1,4):
         question = i
         if question == 1:
@@ -244,6 +273,9 @@ for epoch in range(e, epochs):
                                                   top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
             Q3_metrics.append([bleu, P, R, F1])
 
+    metrics = {'Q1': Q1_metrics, 'Q2': Q2_metrics, 'Q3': Q3_metrics}
+    with open('metrics_Q.pkl', 'wb') as myfile:
+        pickle.dump(metrics, myfile)
     average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)
     tokenizer.save_pretrained(dirname)
