@@ -150,7 +150,7 @@ n_samples = 10
 max_len = 20
 top_k = 50
 temperature = 1.5
-question = 1
+#question = 1
 
 scorer = BERTScorer(model_type='bert-base-uncased')
 q_refs = pickle.load(open('Q_refs.pkl', 'rb'))
@@ -170,14 +170,20 @@ current_batch = 0
 total_phrase_pairs = 0
 loss_list = []
 e = 0
+Q1_metrics = []
+Q2_metrics = []
+Q3_metrics = []
 if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     checkpoint = torch.load(os.path.join(dirname,'checkpoint.pth'))
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     e = checkpoint['epoch'] + 1
     loss_list = checkpoint['loss_list']
-Q1_metrics = []
-Q2_metrics = []
-Q3_metrics = []
+if os.path.exists(os.path.join(dirname,'metrics.pth')):
+    metrics = torch.load(os.path.join(dirname,'metrics.pth'))
+    Q1_metrics = metrics['q1_metrics']
+    Q2_metrics = metrics['q2_metrics']
+    Q3_metrics = metrics['q3_metrics']
+
 for epoch in range(e, epochs):
     t0 = time.time()
     print(30 * "#" + ' Training ' + 30 * "#")
@@ -223,19 +229,19 @@ for epoch in range(e, epochs):
             seed_text = tokenizer.tokenize("who is she?".lower())
             refs = q1_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,top_k=top_k,
-                                                  temperature=temperature, cuda=cuda)
+                                                  temperature=temperature, max_len=max_len, cuda=cuda)
             Q1_metrics.append([bleu, P, R, F1])
         elif question == 2:
             seed_text = tokenizer.tokenize("are you okay?".lower())
             refs = q2_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
-                                                  top_k=top_k,temperature=temperature, cuda=cuda)
+                                                  top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
             Q2_metrics.append([bleu, P, R, F1])
         elif question == 3:
             seed_text = tokenizer.tokenize("why?".lower())
             refs = q3_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
-                                                  top_k=top_k,temperature=temperature, cuda=cuda)
+                                                  top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
             Q3_metrics.append([bleu, P, R, F1])
 
     average_loss = total_loss / len(dataLoader)
@@ -247,6 +253,11 @@ for epoch in range(e, epochs):
         'optimizer_state_dict': optimizer.state_dict(),
         'loss_list':loss_list,
     }, os.path.join(dirname,'checkpoint.pth'))
+    torch.save({
+        'q1_metrics': Q1_metrics,
+        'q2_metrics': Q2_metrics,
+        'q3_metrics': Q3_metrics,
+    }, os.path.join(dirname,'metrics.pth'))
     print("average loss '{}' and train time '{}' min".format(average_loss, (time.time() - t0)/60))
 
 tb.close()

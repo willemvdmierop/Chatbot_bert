@@ -144,7 +144,7 @@ def save_data_csv(question_data, answer_data):
     df.to_csv("answer_data.csv")
 
 
-def return_metrics(scorer, refs, seed_text, n_samples, max_len, top_k, temperature, cuda):
+def return_metrics(scorer, refs, seed_text, n_samples, max_len =20, top_k=50, temperature=1.5, cuda=False):
     untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples, max_len=max_len,
                                                     top_k=top_k, temperature=temperature, cuda=cuda,
                                                     leed_out_len=len(seed_text))
