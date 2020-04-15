@@ -105,7 +105,7 @@ def sequential_generation(seed_text, batch_size=10, max_len=15, leed_out_len=15,
         for j in range(batch_size):
             batch[j][seed_len + i] = idxs[j]
 
-    return untokenize_batch(batch)
+    return untokenize_batch(batch), batch
 
 
 def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0, temperature=None, max_iter=300,
