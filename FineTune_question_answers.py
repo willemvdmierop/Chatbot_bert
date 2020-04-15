@@ -11,6 +11,8 @@ from transformers import AutoModelWithLMHead, AutoTokenizer
 from torch.optim import Adam
 from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
+from bert_score import BERTScorer
+import utils_generation as ugen
 # load the dataset interface
 import utils
 import dataset_Q_A as dataset
@@ -18,8 +20,10 @@ import numpy as np
 import pandas as pd
 import pickle
 device = 'cpu'
+cuda = False
 if (torch.cuda.is_available()):
     device = torch.device('cuda')
+    cuda = True
 
 
 #################################
@@ -140,6 +144,19 @@ def load_data(**train_pars):
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader
 #print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
+########################################## Metrics during Training #################################
+
+n_samples = 10
+max_len = 20
+top_k = 50
+temperature = 1.5
+question = 1
+
+scorer = BERTScorer(model_type='bert-base-uncased')
+q_refs = pickle.load(open('Q_refs.pkl', 'rb'))
+q3_refs = q_refs['q3_refs']
+q2_refs = q_refs['q2_refs']
+q1_refs = q_refs['q1_refs']
 
 
 ############################ Training the Question and answer dataset Model #########################
@@ -158,7 +175,9 @@ if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     e = checkpoint['epoch'] + 1
     loss_list = checkpoint['loss_list']
-
+Q1_metrics = []
+Q2_metrics = []
+Q3_metrics = []
 for epoch in range(e, epochs):
     t0 = time.time()
     print(30 * "#" + ' Training ' + 30 * "#")
@@ -198,6 +217,28 @@ for epoch in range(e, epochs):
         tb.add_scalar(lossname, loss, epoch)
         if counter % 400 == 0:
             print("*", end='')
+    for i in range(1,4):
+        question = i
+        if question == 1:
+            seed_text = tokenizer.tokenize("who is she?".lower())
+            refs = q1_refs
+            bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,top_k=top_k,
+                                                  temperature=temperature, cuda=cuda)
+            Q1_metrics.append([bleu, P, R, F1])
+
+        elif question == 2:
+            seed_text = tokenizer.tokenize("are you okay?".lower())
+            refs = q2_refs
+            bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
+                                                  top_k=top_k,temperature=temperature, cuda=cuda)
+            Q2_metrics.append([bleu, P, R, F1])
+
+        elif question == 3:
+            seed_text = tokenizer.tokenize("why?".lower())
+            refs = q3_refs
+            bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
+                                                  top_k=top_k,temperature=temperature, cuda=cuda)
+            Q3_metrics.append([bleu, P, R, F1])
 
     average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)

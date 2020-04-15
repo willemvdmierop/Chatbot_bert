@@ -37,7 +37,7 @@ ugen.load_model_tokenizer(model_path = model_path, tokenizer_path = tokenizer_pa
 
 n_samples = 1
 batch_size = 2
-max_len = 15
+max_len = 20
 top_k = 50
 temperature = 1.5
 generation_mode = "parallel-sequential"

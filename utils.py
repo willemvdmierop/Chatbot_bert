@@ -3,8 +3,12 @@ from collections import OrderedDict
 import time
 import string
 import torch
+import numpy as np
 import copy
 import pandas as pd
+import utils_generation as ugen
+from nltk.translate import bleu_score as bleu
+from bert_score import BERTScorer
 
 
 def load_lines(file):
@@ -138,6 +142,25 @@ def save_data_csv(question_data, answer_data):
 
     df = pd.DataFrame(array_a)
     df.to_csv("answer_data.csv")
+
+
+def return_metrics(scorer, refs, seed_text, n_samples, max_len, top_k, temperature, cuda):
+    untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples, max_len=max_len,
+                                                    top_k=top_k, temperature=temperature, cuda=cuda,
+                                                    leed_out_len=len(seed_text))
+    bleu_batch = []
+    P_list = []
+    R_list = []
+    F1_list = []
+    for b in batch:
+        bleu_batch.append(
+            bleu.sentence_bleu(hypothesis=ugen.tokenizer.decode(b[len(seed_text) + 2:-1]), references=refs))
+        P, R, F1 = scorer.score(cands=[ugen.tokenizer.decode(b[len(seed_text) + 2:-1])], refs=[refs])
+        P_list.append(P.item())
+        R_list.append(R.item())
+        F1_list.append(F1.item())
+
+    return np.mean(bleu_batch), np.mean(P_list), np.mean(R_list), np.mean(F1_list)
 
 
 def make_input(question, answer, tokenizer):
