@@ -225,14 +225,12 @@ for epoch in range(e, epochs):
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,top_k=top_k,
                                                   temperature=temperature, cuda=cuda)
             Q1_metrics.append([bleu, P, R, F1])
-
         elif question == 2:
             seed_text = tokenizer.tokenize("are you okay?".lower())
             refs = q2_refs
             bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
                                                   top_k=top_k,temperature=temperature, cuda=cuda)
             Q2_metrics.append([bleu, P, R, F1])
-
         elif question == 3:
             seed_text = tokenizer.tokenize("why?".lower())
             refs = q3_refs
