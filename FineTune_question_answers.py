@@ -31,12 +31,12 @@ if (torch.cuda.is_available()):
 #################################
 
 max_phrase_length = 40
-minibatch_size = 20
+minibatch_size = 200
 lrate = 1e-4
 lrate_str = '0001'
 w_decay = 1e-3
 w_decay_str = '001'
-epochs = 2
+epochs = 20
 
 ######## SCIBERT /ARXIV ##########
 scibert_train = False ############
@@ -47,14 +47,14 @@ arxiv_train = False ##############
 ### Folder/File Naming ###
 ##########################
 if scibert_train:
-    dirname = 'model_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + 'mPlenght' + str(max_phrase_length)
-    lossname = 'loss_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + 'mPlenght' + str(max_phrase_length)
+    dirname = 'model_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
+    lossname = 'loss_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
 elif arxiv_train:
-    dirname = 'model_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + 'mPlenght' + str(max_phrase_length)
-    lossname = 'loss_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + 'mPlenght' + str(max_phrase_length)
+    dirname = 'model_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
+    lossname = 'loss_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
 else:
-    dirname = 'model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + 'mPlenght' + str(max_phrase_length)
-    lossname = 'loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + 'mPlenght' + str(max_phrase_length)
+    dirname = 'model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
+    lossname = 'loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
 wd = os.getcwd()
 dirname_final = os.path.join(wd,dirname + '_final')
 dirname =  os.path.join(wd,dirname + '_tmp')
@@ -66,7 +66,7 @@ tb = SummaryWriter(log_dir = 'runs/AdamW')
 
 print('Loading BERT model...')
 
-if os.path.exists(dirname) and len(os.listdir(dirname)) != 0:
+if os.path.exists(os.path.join(dirname, 'pytorch_model.bin')) and os.path.exists(os.path.join(dirname, 'tokenizer_config.json')):
     print("Attention we are initializing the model with an already trained tokenizer from dir: {}!".format(dirname))
     tokenizer = BertTokenizer.from_pretrained(dirname, do_lower_case=True)
     model_Q_A = BertForMaskedLM.from_pretrained(dirname)
@@ -75,7 +75,7 @@ if os.path.exists(dirname) and len(os.listdir(dirname)) != 0:
 else:
     if not os.path.exists(dirname): os.mkdir(dirname)    
     if scibert_train:
-        print("Attention we are initializing the scibert model with extended scibert tokenizer!")
+        print("Attention we are initializing the scibert model with scibert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', do_lower_case=True)
         #num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('allenai/scibert_scivocab_uncased')
@@ -84,14 +84,14 @@ else:
     # elif arxiv_train:
     #   TODO : add loading of arxiv model
     elif arxiv_train:
-        print("Attention we are initializing the arxiv model with extended arxiv tokenizer!")
+        print("Attention we are initializing the arxiv model with arxiv tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('lysandre/arxiv', do_lower_case=True)
         #num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('lysandre/arxiv')
         # !Attention we need the full size of the new vocabulary!!
         #model_Q_A.resize_token_embeddings(len(tokenizer))
     else:
-        print("Attention we are initializing the bert model with extended bert tokenizer!")
+        print("Attention we are initializing the bert model with bert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
         #num_added = tokenizer.add_tokens(cornell_vocab) # extend normal tokenizer with cornell vocabulary
         model_Q_A = BertForMaskedLM.from_pretrained('bert-base-uncased')
@@ -157,6 +157,8 @@ q_refs = pickle.load(open('Q_refs.pkl', 'rb'))
 q3_refs = q_refs['q3_refs']
 q2_refs = q_refs['q2_refs']
 q1_refs = q_refs['q1_refs']
+all_q_refs = [q1_refs,q2_refs,q3_refs]
+all_q_cands = ['Who is she?', 'Are you okay?', 'Why?']
 
 
 ############################ Training the Question and answer dataset Model #########################
@@ -170,19 +172,21 @@ current_batch = 0
 total_phrase_pairs = 0
 loss_list = []
 e = 0
-Q1_metrics = []
-Q2_metrics = []
-Q3_metrics = []
+#Q1_metrics = []
+#Q2_metrics = []
+#Q3_metrics = []
+Q_metrics = [[],[],[]]
 if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     checkpoint = torch.load(os.path.join(dirname,'checkpoint.pth'))
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     e = checkpoint['epoch'] + 1
     loss_list = checkpoint['loss_list']
-if os.path.exists(os.path.join(dirname,'metrics.pth')):
-    metrics = torch.load(os.path.join(dirname,'metrics.pth'))
-    Q1_metrics = metrics['q1_metrics']
-    Q2_metrics = metrics['q2_metrics']
-    Q3_metrics = metrics['q3_metrics']
+if os.path.exists(os.path.join(dirname,'metrics.pkl')):
+    metrics = torch.load(os.path.join(dirname,'metrics.pkl'))
+    #Q1_metrics = metrics['q1_metrics']
+    #Q2_metrics = metrics['q2_metrics']
+    #Q3_metrics = metrics['q3_metrics']
+    Q_metrics = metrics['q_metrics']
 
 for epoch in range(e, epochs):
     t0 = time.time()
@@ -191,7 +195,9 @@ for epoch in range(e, epochs):
     total_loss = 0
     counter = 0
     print("length of DataLoader: ", len(dataLoader))
+    print("will evaluate every ", int(len(dataLoader)/42), ' batches')
     for idx, X in enumerate(dataLoader):
+        
         model_Q_A.zero_grad()
         # number of phrases
         # X[0] is just the index
@@ -221,61 +227,22 @@ for epoch in range(e, epochs):
         #optimizer.zero_grad() #not necessary since optimizer made from model parameters and we zero_grad the model at start of iteration
         counter += 1
         tb.add_scalar(lossname, loss, epoch)
-        if counter % 42 == 0:
-            for i in range(1, 4):
-                question = i
-                if question == 1:
-                    seed_text = tokenizer.tokenize("who is she?".lower())
-                    refs = q1_refs
-                    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
-                                                          n_samples=n_samples, top_k=top_k,
-                                                          temperature=temperature, max_len=max_len, cuda=cuda)
-                    Q1_metrics.append([bleu, P, R, F1,epoch])
-                elif question == 2:
-                    seed_text = tokenizer.tokenize("are you okay?".lower())
-                    refs = q2_refs
-                    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
-                                                          n_samples=n_samples,
-                                                          top_k=top_k, temperature=temperature, max_len=max_len,
-                                                          cuda=cuda)
-                    Q2_metrics.append([bleu, P, R, F1, epoch])
-                elif question == 3:
-                    seed_text = tokenizer.tokenize("why?".lower())
-                    refs = q3_refs
-                    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
-                                                          n_samples=n_samples,
-                                                          top_k=top_k, temperature=temperature, max_len=max_len,
-                                                          cuda=cuda)
-                    Q3_metrics.append([bleu, P, R, F1, epoch])
-
-            metrics = {'Q1': Q1_metrics, 'Q2': Q2_metrics, 'Q3': Q3_metrics}
-            with open('metrics_Q.pkl', 'wb') as myfile:
-                pickle.dump(metrics, myfile)
-
-    for i in range(1,4):
-        question = i
-        if question == 1:
-            seed_text = tokenizer.tokenize("who is she?".lower())
-            refs = q1_refs
-            bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,top_k=top_k,
-                                                  temperature=temperature, max_len=max_len, cuda=cuda)
-            Q1_metrics.append([bleu, P, R, F1, epoch])
-        elif question == 2:
-            seed_text = tokenizer.tokenize("are you okay?".lower())
-            refs = q2_refs
-            bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
-                                                  top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
-            Q2_metrics.append([bleu, P, R, F1, epoch])
-        elif question == 3:
-            seed_text = tokenizer.tokenize("why?".lower())
-            refs = q3_refs
-            bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text, n_samples=n_samples,
-                                                  top_k=top_k,temperature=temperature,  max_len=max_len, cuda=cuda)
-            Q3_metrics.append([bleu, P, R, F1, epoch])
-
-    metrics = {'Q1': Q1_metrics, 'Q2': Q2_metrics, 'Q3': Q3_metrics}
-    with open('metrics_Q.pkl', 'wb') as myfile:
-        pickle.dump(metrics, myfile)
+        if counter % int(len(dataLoader)/42) == 0:
+            ugen.load_model_tokenizer(model_path=model_Q_A, tokenizer_path=tokenizer, is_path=False)
+            print('Metrics (BLEU, P, R, F1, epoch, counter)')
+            for i in range(len(all_q_cands)):
+                seed_text = tokenizer.tokenize(all_q_cands[i].lower())
+                refs = all_q_refs[i]
+                bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
+                                                        n_samples=n_samples, top_k=top_k,
+                                                        temperature=temperature, max_len=max_len, cuda=cuda)
+                Q_metrics[i].append([bleu, P, R, F1,epoch, counter])
+                print('Q'+str(i+1),' Metrics: ', Q_metrics[i][-1])
+            model_Q_A.train()
+        
+    
+    ### End of Epoch ###
+    
     average_loss = total_loss / len(dataLoader)
     loss_list.append(average_loss)
     tokenizer.save_pretrained(dirname)
@@ -285,12 +252,13 @@ for epoch in range(e, epochs):
         'optimizer_state_dict': optimizer.state_dict(),
         'loss_list':loss_list,
     }, os.path.join(dirname,'checkpoint.pth'))
-    torch.save({
-        'q1_metrics': Q1_metrics,
-        'q2_metrics': Q2_metrics,
-        'q3_metrics': Q3_metrics,
-    }, os.path.join(dirname,'metrics.pth'))
+    
+    metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
+    torch.save(metrics, os.path.join(dirname,'metrics.pkl'))
+        
     print("average loss '{}' and train time '{}' min".format(average_loss, (time.time() - t0)/60))
+### End of Training ###
+
 
 tb.close()
 ### Save final trained model/optimizer
