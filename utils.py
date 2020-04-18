@@ -144,7 +144,7 @@ def save_data_csv(question_data, answer_data):
     df.to_csv("answer_data.csv")
 
 
-def return_metrics(scorer, refs, seed_text, n_samples, max_len =20, top_k=50, temperature=1.5, cuda=False):
+def return_metrics(scorer, refs, seed_text, n_samples, max_len =20, top_k=50, temperature=1.5, cuda=False, print_sent = False):
     untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples, max_len=max_len,
                                                     top_k=top_k, temperature=temperature, cuda=cuda,
                                                     leed_out_len=len(seed_text))
@@ -153,6 +153,8 @@ def return_metrics(scorer, refs, seed_text, n_samples, max_len =20, top_k=50, te
     R_list = []
     F1_list = []
     for b in batch:
+        if print_sent:
+            print(ugen.tokenizer.decode(b))
         bleu_batch.append(
             bleu.sentence_bleu(hypothesis=ugen.tokenizer.decode(b[len(seed_text) + 2:-1]), references=refs))
         P, R, F1 = scorer.score(cands=[ugen.tokenizer.decode(b[len(seed_text) + 2:-1])], refs=[refs])
