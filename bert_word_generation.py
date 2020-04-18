@@ -13,8 +13,8 @@ if (torch.cuda.is_available()):
     cuda = True
 # Load the BERT tokenizer.
 print('Loading BERT model...')
-model_path = 'lysandre/arxiv'
-tokenizer_path = 'lysandre/arxiv'
+model_path = 'allenai/scibert_scivocab_uncased'
+tokenizer_path = 'allenai/scibert_scivocab_uncased'
 #model_path = '/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/saved_directories/model_scibert_lr0001_wd001_batch200_ep1_final'
 #tokenizer_path = '/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/saved_directories/model_scibert_lr0001_wd001_batch200_ep1_final'
 ugen.load_model_tokenizer(model_path = model_path, tokenizer_path = tokenizer_path)
