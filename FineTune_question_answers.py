@@ -221,7 +221,7 @@ for epoch in range(e, epochs):
         loss = outputs[0]
         total_loss += loss
         loss.backward()
-        # gradient clipping: 
+        # gradient clipping
         torch.nn.utils.clip_grad_norm_(model_Q_A.parameters(), max_grad_norm)
         optimizer.step()
         #optimizer.zero_grad() #not necessary since optimizer made from model parameters and we zero_grad the model at start of iteration

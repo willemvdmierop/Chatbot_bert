@@ -177,7 +177,6 @@ def make_input(question, answer, tokenizer):
     masked_lm_labels_temp = -100 * (
             torch.ones(len(input_phrase['attention_mask'])) - input_phrase['token_type_ids'] == 1)
     masked_lm_labels = (input_phrase['token_type_ids'] * input_phrase['input_ids']) + masked_lm_labels_temp
-    input_phrase['attention_mask'] = copy.deepcopy(masked_lm_labels) / -100
     new_input_eval = copy.deepcopy(input_phrase['input_ids'])
     new_input_eval[
         (input_phrase['attention_mask'] - input_phrase['token_type_ids']) == 0] = tokenizer.convert_tokens_to_ids(
