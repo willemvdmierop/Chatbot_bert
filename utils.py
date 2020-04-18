@@ -131,14 +131,14 @@ def print_dialogue_data_metrics(question_data, answer_data):
 def save_data_csv(question_data, answer_data):
     array_q = []
     for _, value in enumerate(question_data):
-        array_q.append(question_data[value])
+        array_q.append([value])
 
     df = pd.DataFrame(array_q)
     df.to_csv("question_data.csv")
 
     array_a = []
     for _, value in enumerate(answer_data):
-        array_a.append(answer_data[value])
+        array_a.append([value])
 
     df = pd.DataFrame(array_a)
     df.to_csv("answer_data.csv")

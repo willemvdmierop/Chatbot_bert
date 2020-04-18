@@ -86,7 +86,7 @@ print("BERT %s self-BLEU: %.2f" % (model_path, 100 * ugen.self_bleu(bert_sents))
 '''
 untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples,max_len=max_len, top_k=top_k,temperature=temperature, cuda=cuda, leed_out_len=len(seed_text))
 gen_batch = []
-
+print(untokenized)
 for b in batch:
     gen_batch.append(ugen.tokenizer.decode(b[len(seed_text)+2:-1]))
     print(ugen.tokenizer.decode(b))

@@ -11,6 +11,7 @@ from transformers import AutoModelWithLMHead, AutoTokenizer
 from torch.optim import Adam
 from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
+import bert_score
 from bert_score import BERTScorer
 import utils_generation as ugen
 # load the dataset interface
@@ -36,7 +37,7 @@ lrate = 1e-4
 lrate_str = '0001'
 w_decay = 1e-3
 w_decay_str = '001'
-epochs = 20
+epochs = 1
 
 ######## SCIBERT /ARXIV ##########
 scibert_train = False ############
@@ -123,11 +124,7 @@ END_TOKEN = "</S>"
 
 question_data, answer_data = utils.question_answers_dataset()
 
-#utils.save_data_csv(question_data,answer_data)
-#cornell_vocab = utils.create_vocab() #use this for dynamic creation of vocabulary (but takes long time)
-#with open('simp_cornell_vocab.txt', 'r') as f:
-#   cornell_vocab = [word.rstrip('\n') for word in f]
-
+# utils.save_data_csv(question_data,answer_data)
 end = time.time()
 print('Total data preprocessing time is {0:.2f} and the length of the dataset is {1:d}'.format(end - start, len(question_data)))
 '''
@@ -188,6 +185,7 @@ if os.path.exists(os.path.join(dirname,'metrics.pkl')):
     #Q3_metrics = metrics['q3_metrics']
     Q_metrics = metrics['q_metrics']
 
+max_grad_norm = 1.0
 for epoch in range(e, epochs):
     t0 = time.time()
     print(30 * "#" + ' Training ' + 30 * "#")
@@ -197,7 +195,7 @@ for epoch in range(e, epochs):
     print("length of DataLoader: ", len(dataLoader))
     print("will evaluate every ", int(len(dataLoader)/42), ' batches')
     for idx, X in enumerate(dataLoader):
-        
+        model_Q_A.train()
         model_Q_A.zero_grad()
         # number of phrases
         # X[0] is just the index
@@ -223,6 +221,8 @@ for epoch in range(e, epochs):
         loss = outputs[0]
         total_loss += loss
         loss.backward()
+        # gradient clipping: 
+        torch.nn.utils.clip_grad_norm_(model_Q_A.parameters(), max_grad_norm)
         optimizer.step()
         #optimizer.zero_grad() #not necessary since optimizer made from model parameters and we zero_grad the model at start of iteration
         counter += 1
