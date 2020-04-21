@@ -26,7 +26,7 @@ def create_phrases_dict(l):
     return phrases
 
 
-loaded_lines = load_lines("movie_lines.txt")
+loaded_lines = load_lines("Data/movie_lines.txt")
 all_lines = create_phrases_dict(loaded_lines)
 
 
@@ -43,7 +43,7 @@ def question_answers_dataset():
     all_movie_lines = all_lines
     questions_dic = []
     answers_dic = []
-    movie_dialogues = load_dialogues("movie_conversations.txt")
+    movie_dialogues = load_dialogues("Data/movie_conversations.txt")
     for idx, dialogue in enumerate(movie_dialogues):
         phrases = dialogue[-1]
         phrases = re.split('\W+', phrases)[1:-1]
@@ -67,7 +67,7 @@ def create_dialogue_dataset():
     movie_lines = loaded_lines
     all_movie_lines = all_lines
     # this file contains indices of the phrases
-    movie_dialogues = load_dialogues("movie_conversations.txt")
+    movie_dialogues = load_dialogues("Data/movie_conversations.txt")
     # this list will contain all oredered dicts
     full_list = []
     for idx, dialogue in enumerate(movie_dialogues):
