@@ -140,7 +140,7 @@ def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0
             for_print = for_print[:seed_len + kk + 1] + ['(*)'] + for_print[seed_len + kk + 1:]
             print("iter", ii + 1, " ".join(for_print))
 
-    return untokenize_batch(batch)
+    return untokenize_batch(batch), batch
 
 '''
 def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,

@@ -5,6 +5,7 @@ import os
 from nltk.translate import bleu_score as bleu
 import utils
 import utils_generation as ugen
+from transformers import BertForQuestionAnswering
 
 device = 'cpu'
 cuda = False
@@ -13,8 +14,11 @@ if (torch.cuda.is_available()):
     cuda = True
 # Load the BERT tokenizer.
 print('Loading BERT model...')
-model_path = 'allenai/scibert_scivocab_uncased'
-tokenizer_path = 'allenai/scibert_scivocab_uncased'
+
+model_path = 'bert-base-uncased'
+tokenizer_path = 'bert-base-uncased'
+#model_path = '/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_60_Baseline/model_bert_lr0001_wd001_batch200_ep60_mPlenght40_tmp'
+#tokenizer_path = '/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_60_Baseline/model_bert_lr0001_wd001_batch200_ep60_mPlenght40_tmp'
 #model_path = '/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/saved_directories/model_scibert_lr0001_wd001_batch200_ep1_final'
 #tokenizer_path = '/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/saved_directories/model_scibert_lr0001_wd001_batch200_ep1_final'
 ugen.load_model_tokenizer(model_path = model_path, tokenizer_path = tokenizer_path)
@@ -38,6 +42,8 @@ burnin = 250
 sample = True
 max_iter = 500
 question = 2
+ModelForQ_A_on = True
+Metrics_calculation = False
 
 #========================================== BERTScorer initialisation ==================================================
 Q_metrics = [[],[],[]]
@@ -53,19 +59,44 @@ all_q_cands = ['Who is she?', 'Are you okay?', 'Why?']
 #==================================================== Word generation ==================================================
 # Choose the prefix context
 #seed_text = ugen.tokenizer.tokenize("who is she?".lower())
-print('Metrics (BLEU, P, R, F1)')
-for i in range(len(all_q_cands)):
-    seed_text = ugen.tokenizer.tokenize(all_q_cands[i].lower())
-    refs = all_q_refs[i]
-    bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
-                                            n_samples=n_samples, top_k=top_k,
-                                            temperature=temperature, max_len=max_len, cuda=cuda, print_sent = True)
-    Q_metrics[i].append([bleu, P, R, F1])
-    print('Q'+str(i+1),' Metrics: ', Q_metrics[i][-1])
+if Metrics_calculation:
+    print('Metrics (BLEU, P, R, F1)')
+    for i in range(len(all_q_cands)):
+        seed_text = ugen.tokenizer.tokenize(all_q_cands[i].lower())
+        refs = all_q_refs[i]
+        bleu, P, R, F1 = utils.return_metrics(scorer=scorer, refs=refs, seed_text=seed_text,
+                                                n_samples=n_samples, top_k=top_k,
+                                                temperature=temperature, max_len=max_len, cuda=cuda, print_sent = True)
+        Q_metrics[i].append([bleu, P, R, F1])
+        print('Q'+str(i+1),' Metrics: ', Q_metrics[i][-1])
 
 
-metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
-torch.save(metrics, os.path.join(os.getcwd(),'metrics_sci_benchmark.pkl'))
+    metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
+    torch.save(metrics, os.path.join(os.getcwd(),'metrics_sci_benchmark.pkl'))
+
+#======================================= Bert for question and answering ===============================================
+if ModelForQ_A_on:
+    modelForQuestionAnswering = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
+
+    for i in range(len(all_q_cands)):
+        seed_text = ugen.tokenizer.tokenize(all_q_cands[i].lower())
+        untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples, max_len=max_len,
+                                                        top_k=top_k, temperature=temperature, cuda=cuda,
+                                                        leed_out_len=len(seed_text))
+
+        question = all_q_cands[i].lower()
+        text = ugen.tokenizer.decode(batch[0][len(seed_text) + 2:-1])
+        encoding = ugen.tokenizer.encode_plus(question, text)
+        input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
+        start_scores, end_scores = modelForQuestionAnswering(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
+        print("\nQuestion: ", question, "\nAnswer:", text)
+        all_tokens = ugen.tokenizer.convert_ids_to_tokens(input_ids)
+        answer = ' '.join(all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1])
+        print(f'The answer according to modelForQuestionAnswering is: {answer}')
+
+
+
+
 
 '''
 scorer = BERTScorer(model_type='bert-base-uncased')
