@@ -3,9 +3,9 @@ import torch
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-metrics = torch.load("metrics_grad_100.pkl")
+metrics = torch.load("Metrics/metrics_grad_100.pkl")
 Q_metrics = metrics['q_metrics']
-
+stop = 100
 print(Q_metrics)
 Q1_metrics = Q_metrics[0]
 Q2_metrics = Q_metrics[1]
@@ -17,7 +17,7 @@ df_q3 = pd.DataFrame(Q3_metrics)
 #df_q1.to_csv("Q1-test.csv")
 print(df_q1[0])
 window = 20
-x = np.linspace(start = 0, stop = 100, num= 4200)
+x = np.linspace(start = 0, stop = stop, num= stop*42)
 print(x)
 print(x.shape)
 

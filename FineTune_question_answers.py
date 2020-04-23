@@ -11,6 +11,7 @@ from transformers import AutoModelWithLMHead, AutoTokenizer
 from torch.optim import Adam
 from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
+from transformers import get_cosine_with_hard_restarts_schedule_with_warmup
 import bert_score
 from bert_score import BERTScorer
 import utils_generation as ugen
@@ -26,7 +27,7 @@ if (torch.cuda.is_available()):
     device = torch.device('cuda')
     cuda = True
 
-
+# ========================================= Training Hyper-Parameters ======================================== #
 #################################
 ### Training Hyper-Parameters ###
 #################################
@@ -42,6 +43,10 @@ epochs = 1
 ######## SCIBERT /ARXIV ##########
 scibert_train = False ############
 arxiv_train = False ##############
+##################################
+######## SCIBERT /ARXIV ##########
+Gradient_clipping_on = True ######
+Schedule_ON = True  ##############
 ##################################
 
 ##########################
@@ -63,7 +68,7 @@ dirname =  os.path.join(wd,dirname + '_tmp')
 tb = SummaryWriter(log_dir = 'runs/AdamW')
 
 
-#################################### Load the BERT tokenizer. ########################################
+# ========================================= Load Bert tokenizer ======================================== #
 
 print('Loading BERT model...')
 
@@ -115,7 +120,7 @@ for p in params[-4:]:
     print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
 '''
 
-################################# Load Cornell Data ##################################
+# ================================================ Load Cornell dataset ======================================== #
 
 start = time.time()
 OOV = '<UNK>'
@@ -141,7 +146,7 @@ def load_data(**train_pars):
 load_data_pars = {'stage': 'train', 'num_workers': 3}
 dataLoader = load_data(**load_data_pars)  # this returns a dataloader
 #print('\n' + 40 * '#', "Loading the Bert Tokenizer", 40 * '#')
-########################################## Metrics during Training #################################
+# ========================================== Metrics during training ======================================== #
 
 n_samples = 10
 max_len = 20
@@ -158,20 +163,22 @@ all_q_refs = [q1_refs,q2_refs,q3_refs]
 all_q_cands = ['Who is she?', 'Are you okay?', 'Why?']
 
 
-############################ Training the Question and answer dataset Model #########################
-print('\n' + 40 * '#', "Training on dataset", 40 * '#')
 
+# ========================================= Optimizer and scheduler ======================================== #
 
 optim_pars = {'lr': lrate, 'weight_decay': w_decay}
 optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
+if Schedule_ON:
+    num_training_steps = 1000
+    num_warmup_steps = 100
+    scheduler = get_cosine_with_hard_restarts_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps,
+                                                                   num_training_steps= num_training_steps)
+    print("\n========= attention we are using a cosin with hard restarts lr schedule =========")
 
 current_batch = 0
 total_phrase_pairs = 0
 loss_list = []
 e = 0
-#Q1_metrics = []
-#Q2_metrics = []
-#Q3_metrics = []
 Q_metrics = [[],[],[]]
 if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     checkpoint = torch.load(os.path.join(dirname,'checkpoint.pth'))
@@ -180,11 +187,10 @@ if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     loss_list = checkpoint['loss_list']
 if os.path.exists(os.path.join(dirname,'metrics.pkl')):
     metrics = torch.load(os.path.join(dirname,'metrics.pkl'))
-    #Q1_metrics = metrics['q1_metrics']
-    #Q2_metrics = metrics['q2_metrics']
-    #Q3_metrics = metrics['q3_metrics']
     Q_metrics = metrics['q_metrics']
 
+# ============================================ Training the model ======================================== #
+print('\n' + 40 * '#', "Training on dataset", 40 * '#')
 max_grad_norm = 1.0
 for epoch in range(e, epochs):
     t0 = time.time()
@@ -221,9 +227,12 @@ for epoch in range(e, epochs):
         loss = outputs[0]
         total_loss += loss
         loss.backward()
-        # gradient clipping
-        torch.nn.utils.clip_grad_norm_(model_Q_A.parameters(), max_grad_norm)
+        if Gradient_clipping_on:
+            # gradient clipping
+            torch.nn.utils.clip_grad_norm_(model_Q_A.parameters(), max_grad_norm)
         optimizer.step()
+        if Schedule_ON:
+            scheduler.step()
         #optimizer.zero_grad() #not necessary since optimizer made from model parameters and we zero_grad the model at start of iteration
         counter += 1
         tb.add_scalar(lossname, loss, epoch)
