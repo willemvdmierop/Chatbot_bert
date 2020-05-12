@@ -286,4 +286,6 @@ tb.close()
 if not os.path.exists(dirname_final): os.mkdir(dirname_final) 
 tokenizer.save_pretrained(dirname_final)
 model_Q_A.save_pretrained(dirname_final)
+metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
+torch.save(metrics, os.path.join(dirname_final,'metrics.pkl'))
 
