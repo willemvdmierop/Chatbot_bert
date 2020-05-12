@@ -12,6 +12,7 @@ from torch.optim import Adam
 from transformers import AdamW
 from torch.utils.tensorboard import SummaryWriter
 from transformers import get_cosine_with_hard_restarts_schedule_with_warmup
+from transformers import get_cosine_schedule_with_warmup
 import bert_score
 from bert_score import BERTScorer
 import utils_generation as ugen
@@ -38,7 +39,7 @@ lrate = 1e-4
 lrate_str = '0001'
 w_decay = 1e-3
 w_decay_str = '001'
-epochs = 1
+epochs = 40
 
 ######## SCIBERT /ARXIV ##########
 scibert_train = False ############
@@ -53,14 +54,14 @@ Schedule_ON = True  ##############
 ### Folder/File Naming ###
 ##########################
 if scibert_train:
-    dirname = 'model_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
-    lossname = 'loss_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
+    dirname = 'model_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
+    lossname = 'loss_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
 elif arxiv_train:
-    dirname = 'model_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
-    lossname = 'loss_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
+    dirname = 'model_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
+    lossname = 'loss_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
 else:
-    dirname = 'model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
-    lossname = 'loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length)
+    dirname = 'model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
+    lossname = 'loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
 wd = os.getcwd()
 dirname_final = os.path.join(wd,dirname + '_final')
 dirname =  os.path.join(wd,dirname + '_tmp')
@@ -169,10 +170,11 @@ all_q_cands = ['Who is she?', 'Are you okay?', 'Why?']
 optim_pars = {'lr': lrate, 'weight_decay': w_decay}
 optimizer = AdamW(model_Q_A.parameters(), **optim_pars)
 if Schedule_ON:
-    num_training_steps = 1000
-    num_warmup_steps = 100
-    scheduler = get_cosine_with_hard_restarts_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps,
-                                                                   num_training_steps= num_training_steps)
+    num_training_steps = len(dataLoader)*epochs
+    num_warmup_steps = int(len(dataLoader)*epochs / 10)
+    #scheduler = get_cosine_with_hard_restarts_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps,
+                                                                   #num_training_steps= num_training_steps)
+    scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps= num_training_steps)
     print("\n========= attention we are using a cosin with hard restarts lr schedule =========")
 
 current_batch = 0
@@ -183,6 +185,7 @@ Q_metrics = [[],[],[]]
 if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     checkpoint = torch.load(os.path.join(dirname,'checkpoint.pth'))
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    scheduler.load_state_dict(checkpoint['schedule_state_dict'])
     e = checkpoint['epoch'] + 1
     loss_list = checkpoint['loss_list']
 if os.path.exists(os.path.join(dirname,'metrics.pkl')):
@@ -259,6 +262,7 @@ for epoch in range(e, epochs):
     torch.save({
         'epoch': epoch,
         'optimizer_state_dict': optimizer.state_dict(),
+        'schedule_state_dict': scheduler.state_dict(),
         'loss_list':loss_list,
     }, os.path.join(dirname,'checkpoint.pth'))
     

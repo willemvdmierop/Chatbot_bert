@@ -6,7 +6,7 @@ from nltk.translate import bleu_score as bleu
 import utils
 import utils_generation as ugen
 from transformers import BertForQuestionAnswering
-
+from transformers import AutoTokenizer
 device = 'cpu'
 cuda = False
 if (torch.cuda.is_available()):
@@ -17,8 +17,8 @@ print('Loading BERT model...')
 
 model_path = 'bert-base-uncased'
 tokenizer_path = 'bert-base-uncased'
-#model_path = '/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_60_Baseline/model_bert_lr0001_wd001_batch200_ep60_mPlenght40_tmp'
-#tokenizer_path = '/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_60_Baseline/model_bert_lr0001_wd001_batch200_ep60_mPlenght40_tmp'
+#model_path = '/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_100/model_bert_lr0001_wd001_batch200_ep100_mPlenght40_tmp'
+#tokenizer_path = '/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_100/model_bert_lr0001_wd001_batch200_ep100_mPlenght40_tmp'
 #model_path = '/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/saved_directories/model_scibert_lr0001_wd001_batch200_ep1_final'
 #tokenizer_path = '/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/saved_directories/model_scibert_lr0001_wd001_batch200_ep1_final'
 ugen.load_model_tokenizer(model_path = model_path, tokenizer_path = tokenizer_path)
@@ -74,29 +74,64 @@ if Metrics_calculation:
     metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
     torch.save(metrics, os.path.join(os.getcwd(),'metrics_sci_benchmark.pkl'))
 
+#sci_tokenizer = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', do_lower_case=True)
+##vocab_sci = sci_tokenizer.get_vocab()
+#bert_tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased', do_lower_case = True)
+#vocab_bert = bert_tokenizer.get_vocab()
+
+import readability
+# readability_score = readability.getmeasures(answers[0], lang = 'en')
+# print("readability score:", readability_score['readability grades']['FleschReadingEase'])
+# https://en.wikipedia.org/wiki/Flesch–Kincaid_readability_tests
+# https://readable.com/blog/how-can-lix-and-rix-help-score-readability-for-non-english-content/
+# the flesh readability score represents the school reading level. So a lower score means scibert?
+for i in range(len(all_q_cands)):
+    print("\nQuestion: ", all_q_cands[i])
+    seed_text = ugen.tokenizer.tokenize(all_q_cands[i].lower())
+    print("readability score of question",readability.getmeasures(seed_text, lang='en')['readability grades']['FleschReadingEase'])
+    print("Lix score of question",
+          readability.getmeasures(seed_text, lang='en')['readability grades']['LIX'])
+
+difficult_question = "The inoculation of Wagner, was it gravitational indexing and macroscopic?"
+print("\nDifficult Question: ", difficult_question)
+test_ques = ugen.tokenizer.tokenize(difficult_question.lower())
+print("readability score of test question",readability.getmeasures(test_ques, lang='en')['readability grades']['FleschReadingEase'])
+print("Lix score of test question",
+          readability.getmeasures(test_ques, lang='en')['readability grades']['LIX'])
+
+if readability.getmeasures(test_ques, lang='en')['readability grades']['FleschReadingEase'] < 80:
+    print('\nHold on let me get an expert to help you with your question!')
+
+answers = []
 #======================================= Bert for question and answering ===============================================
 if ModelForQ_A_on:
     modelForQuestionAnswering = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
 
     for i in range(len(all_q_cands)):
-        seed_text = ugen.tokenizer.tokenize(all_q_cands[i].lower())
-        untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples, max_len=max_len,
-                                                        top_k=top_k, temperature=temperature, cuda=cuda,
-                                                        leed_out_len=len(seed_text))
+        done = False
+        while not done:
+            seed_text = ugen.tokenizer.tokenize(all_q_cands[i].lower())
+            untokenized, batch = ugen.sequential_generation(seed_text=seed_text, batch_size=n_samples, max_len=max_len,
+                                                            top_k=top_k, temperature=temperature, cuda=cuda,
+                                                            leed_out_len=len(seed_text))
 
-        question = all_q_cands[i].lower()
-        text = ugen.tokenizer.decode(batch[0][len(seed_text) + 2:-1])
-        encoding = ugen.tokenizer.encode_plus(question, text)
-        input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
-        start_scores, end_scores = modelForQuestionAnswering(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
-        print("\nQuestion: ", question, "\nAnswer:", text)
-        all_tokens = ugen.tokenizer.convert_ids_to_tokens(input_ids)
-        answer = ' '.join(all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1])
-        print(f'The answer according to modelForQuestionAnswering is: {answer}')
+            question = all_q_cands[i].lower()
+            text = ugen.tokenizer.decode(batch[0][len(seed_text) + 2:-1])
+            encoding = ugen.tokenizer.encode_plus(question, text)
+            input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
+            start_scores, end_scores = modelForQuestionAnswering(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
+            #print("\nQuestion: ", question, "\nAnswer:", text)
+            all_tokens = ugen.tokenizer.convert_ids_to_tokens(input_ids)
+            answer = ' '.join(all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1])
+            #print(f'The answer according to modelForQuestionAnswering is: "{answer}"')
+            if len(answer) > 0:
+                answers.append(answer)
+                print(question + ' ' + answer)
+                done = True
+            else:
+                print('Empty answer, try again!')
 
-
-
-
+print("\nThese are our answers", answers)
 
 '''
 scorer = BERTScorer(model_type='bert-base-uncased')

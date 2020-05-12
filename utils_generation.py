@@ -62,7 +62,7 @@ def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_
         - top_k (int): if >0, only sample from the top k most probable words
         - sample (Bool): if True, sample from full distribution. Overridden by top_k
 
-    - explanation of tempereture:
+    - explanation of temperature:
     https://towardsdatascience.com/how-to-sample-from-language-models-682bceb97277
 
   """
