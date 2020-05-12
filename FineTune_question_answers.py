@@ -37,8 +37,8 @@ max_phrase_length = 40
 minibatch_size = 200
 lrate = 1e-4
 lrate_str = '0001'
-w_decay = 1e-3
-w_decay_str = '001'
+w_decay = 1e-2
+w_decay_str = '01'
 epochs = 40
 
 ######## SCIBERT /ARXIV ##########
@@ -47,7 +47,7 @@ arxiv_train = False ##############
 ##################################
 ######## SCIBERT /ARXIV ##########
 Gradient_clipping_on = True ######
-Schedule_ON = True  ##############
+Schedule_ON = False  #############
 ##################################
 
 ##########################
@@ -259,12 +259,20 @@ for epoch in range(e, epochs):
     loss_list.append(average_loss)
     tokenizer.save_pretrained(dirname)
     model_Q_A.save_pretrained(dirname)
-    torch.save({
-        'epoch': epoch,
-        'optimizer_state_dict': optimizer.state_dict(),
-        'schedule_state_dict': scheduler.state_dict(),
-        'loss_list':loss_list,
-    }, os.path.join(dirname,'checkpoint.pth'))
+    if Schedule_ON:
+        torch.save({
+            'epoch': epoch,
+            'optimizer_state_dict': optimizer.state_dict(),
+            'schedule_state_dict': scheduler.state_dict(),
+            'loss_list':loss_list,
+        }, os.path.join(dirname,'checkpoint.pth'))
+    else:
+        torch.save({
+            'epoch': epoch,
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss_list': loss_list,
+        }, os.path.join(dirname, 'checkpoint.pth'))
+
     
     metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
     torch.save(metrics, os.path.join(dirname,'metrics.pkl'))

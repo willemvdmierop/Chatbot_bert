@@ -120,10 +120,10 @@ if ModelForQ_A_on:
             encoding = ugen.tokenizer.encode_plus(question, text)
             input_ids, token_type_ids = encoding["input_ids"], encoding["token_type_ids"]
             start_scores, end_scores = modelForQuestionAnswering(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
-            #print("\nQuestion: ", question, "\nAnswer:", text)
+            print("\nQuestion: ", question, "\nAnswer:", text)
             all_tokens = ugen.tokenizer.convert_ids_to_tokens(input_ids)
             answer = ' '.join(all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1])
-            #print(f'The answer according to modelForQuestionAnswering is: "{answer}"')
+            print(f'The answer according to modelForQuestionAnswering is: "{answer}"')
             if len(answer) > 0:
                 answers.append(answer)
                 print(question + ' ' + answer)
