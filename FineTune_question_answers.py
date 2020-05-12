@@ -35,10 +35,10 @@ if (torch.cuda.is_available()):
 
 max_phrase_length = 40
 minibatch_size = 200
-lrate = 1e-4
-lrate_str = '0001'
-w_decay = 1e-2
-w_decay_str = '01'
+lrate = 1e-3
+lrate_str = '001'
+w_decay = 1e-3
+w_decay_str = '001'
 epochs = 40
 
 ######## SCIBERT /ARXIV ##########
