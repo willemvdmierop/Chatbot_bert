@@ -35,11 +35,11 @@ if (torch.cuda.is_available()):
 
 max_phrase_length = 40
 minibatch_size = 200
-lrate = 1e-3
+lrate = 1e-4
 lrate_str = '001'
-w_decay = 1e-3
+w_decay = 1e-2
 w_decay_str = '001'
-epochs = 40
+epochs = 60
 
 ######## SCIBERT /ARXIV ##########
 scibert_train = False ############
@@ -185,7 +185,8 @@ Q_metrics = [[],[],[]]
 if os.path.exists(os.path.join(dirname,'checkpoint.pth')):
     checkpoint = torch.load(os.path.join(dirname,'checkpoint.pth'))
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    scheduler.load_state_dict(checkpoint['schedule_state_dict'])
+    if Schedule_ON:
+        scheduler.load_state_dict(checkpoint['schedule_state_dict'])
     e = checkpoint['epoch'] + 1
     loss_list = checkpoint['loss_list']
 if os.path.exists(os.path.join(dirname,'metrics.pkl')):
