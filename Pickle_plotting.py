@@ -3,14 +3,16 @@ import torch
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-metrics = torch.load("metrics_temp_sched.pkl")
-Q_metrics = metrics['q_metrics']
+metrics1 = torch.load("Metrics/metrics_BERT_baseline_60.pkl")
+metrics2 = torch.load("Metrics/metrics_WD_01_lr0001_Sched_False_60_epochs.pkl")
+Q_metrics1 = metrics1['q_metrics']
+Q_metrics2 = metrics2['q_metrics']
 stop = 100
-print(Q_metrics)
+print(Q_metrics1)
 single_plots = False
-Q1_metrics = Q_metrics[0]
-Q2_metrics = Q_metrics[1]
-Q3_metrics = Q_metrics[2]
+Q1_metrics1 = Q_metrics1[0]
+Q2_metrics = Q_metrics1[1]
+Q3_metrics = Q_metrics1[2]
 
 df_q1 = pd.DataFrame(Q1_metrics)
 df_q2 = pd.DataFrame(Q2_metrics)
@@ -18,7 +20,7 @@ df_q3 = pd.DataFrame(Q3_metrics)
 #df_q1.to_csv("Q1-test.csv")
 print(df_q1[0])
 window = 20
-x = np.linspace(start = 0, stop = 85, num= 3570)
+x = np.linspace(start = 0, stop = 60, num= 2520)
 print(x)
 print(x.shape)
 
@@ -44,10 +46,10 @@ if single_plots:
     ax.legend()
     plt.show()
     fig, ax = plt.subplots(1, 1, figsize=(14, 5))
-    ax.plot(x, df_q2[0].rolling(window).mean(), label='BLEU_score')
-    ax.plot(x, df_q2[1].rolling(window).mean(), label='Precision')
-    ax.plot(x, df_q2[2].rolling(window).mean(), label='Recal')
-    ax.plot(x, df_q2[3].rolling(window).mean(), label='F1')
+    ax.plot(x, df_q3[0].rolling(window).mean(), label='BLEU_score')
+    ax.plot(x, df_q3[1].rolling(window).mean(), label='Precision')
+    ax.plot(x, df_q3[2].rolling(window).mean(), label='Recal')
+    ax.plot(x, df_q3[3].rolling(window).mean(), label='F1')
     ax.set_title("why?")
     ax.set_xlabel("count")
     ax.set_ylabel("Score")
@@ -74,10 +76,10 @@ else:
     ax[1].set_ylabel("Score")
     ax[1].legend()
 
-    ax[2].plot(x,df_q2[0].rolling(window).mean(), label = 'BLEU_score')
-    ax[2].plot(x,df_q2[1].rolling(window).mean(), label = 'Precision')
-    ax[2].plot(x,df_q2[2].rolling(window).mean(), label = 'Recal')
-    ax[2].plot(x,df_q2[3].rolling(window).mean(), label = 'F1')
+    ax[2].plot(x,df_q3[0].rolling(window).mean(), label = 'BLEU_score')
+    ax[2].plot(x,df_q3[1].rolling(window).mean(), label = 'Precision')
+    ax[2].plot(x,df_q3[2].rolling(window).mean(), label = 'Recal')
+    ax[2].plot(x,df_q3[3].rolling(window).mean(), label = 'F1')
     ax[2].set_title("why?")
     ax[2].set_xlabel("count")
     ax[2].set_ylabel("Score")
