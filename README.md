@@ -13,6 +13,12 @@ For the purposes of a conversational interface, we are required to generate text
 The dataset used for fine-tuning is the Cornell Movie-Quotes Corpus that contains conversations form raw movie scripts. This repo only uses the [movie_lines.txt](./cornell_movie_dialogs_corpus/movie_lines.txt) and the [movie_conversations.txt](./cornell_movie_dialogs_corpus/movie_conversations.txt) files during training. The [movie_lines.txt](./cornell_movie_dialogs_corpus/movie_lines.txt) dataset contains the line-id, the character-id, the movie-id, the character-name and the text. The [movie_conversations.txt](./cornell_movie_dialogs_corpus/movie_conversations.txt) contains the different line-ids of text from a particular conversation as a sequence of dialogue lines.
 
 From the parsed text, we construct a dataset of phrase pairs from all the phrases and the responses produced in a dialogue. For example, if a dialogue has four phrases A,B,C,D, then the phrase pairs that are added to our dataset are (A,B), (B,C), and (C,D).
+
+## Accuracy metrics during training
+During training we keep track of the performance of the model using BertScore and BLEU-score. Both of these metrics rely on a reference text being available, this to create a dataset with reference answers to predefined answers using this [file](./Metrics_files/Index_generation_Questions_F1_score.py). 
+
+Three general questions are defined that are applicable for a chatbot; ”who is she?”, ”Are you okay?” and ”Why?”. For each of these questions a F1 score is calculated compared to the questions that are available in our questions dataset of the phrase pairs. If the question in the dataset has a F1 score higher than 0.9 this question can be seen as similar to our chosen question and the index is stored. From these indexes we then generate a dataset of answers, this dataset will be used as a reference to possible answers that the chatbot could generate for our question.
+
 ## Required packages
 - Python 3.6
 - Pytorch 
