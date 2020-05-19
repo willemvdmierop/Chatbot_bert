@@ -35,7 +35,9 @@ The following graphs show the performance of our model during training.
 <p align="center">
   <img width="460" height="300" src="Images/lr_comparison.png">
 </p>
+
 #### Learning Rate Schedules
+add graph
 
 ## Required packages
 - Python 3.6
@@ -60,12 +62,17 @@ python3.6 FineTune_SCI_and_BERT.py
 Training parameters can be changed by editing the corresponding section in beginning of the code
 
 ## Other files
-utils.py :  utility methods used for training
-utils_generation.py : utilty methods used for text generation
-Dataset_Q_A.py : classes need for dataset creation
-bert_word_generation.py : file used to generate text
-movie_lines.txt : text file containing movie line content with line IDs
-movie_conversations : text file containing the sets of line IDs that consist of each dialogue
-why_refs.txt : text file containing all the answers provided to the question "Why?" from the cornell dataset
-who_is_she_refs.txt : text file containing all the answers provided to the question "Who is she?" from the cornell dataset
-are_you_okay_refs.txt : text file containing all the answers provided to the question "Are you akoy?" from the cornell dataset
+utils.py :  utility methods used for training <br/>
+utils_generation.py : utilty methods used for text generation <br/>
+Dataset_Q_A.py : classes need for dataset creation <br/>
+bert_word_generation.py : file used to generate text <br/>
+movie_lines.txt : text file containing movie line content with line IDs <br/>
+movie_conversations : text file containing the sets of line IDs that consist of each dialogue <br/>
+why_refs.txt : text file containing all the answers provided to the question "Why?" from the cornell dataset <br/>
+who_is_she_refs.txt : text file containing all the answers provided to the question "Who is she?" from the cornell dataset <br/>
+are_you_okay_refs.txt : text file containing all the answers provided to the question "Are you akoy?" from the cornell dataset <br/>
+
+## Lay-Out Graphical user interface
+<p align="center">
+  <img width="460" height="300" src="Images/GUI_Interface.png">
+</p>
