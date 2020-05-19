@@ -74,5 +74,5 @@ are_you_okay_refs.txt : text file containing all the answers provided to the que
 
 ## Lay-Out Graphical user interface
 <p align="center">
-  <img width="460" height="300" src="Images/GUI_Interface.png">
+  <img width="300" height="300" src="Images/GUI_Interface.png">
 </p>
