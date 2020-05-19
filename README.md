@@ -26,15 +26,16 @@ The following graphs show the performance of our model during training.
 </p>
 
 ### Parameter tuning
+#### Weight Decay
 <p align="center">
   <img width="460" height="300" src="Images/Parametertuning_WD.png">
 </p>
 
+#### Learning Rate
 <p align="center">
   <img width="460" height="300" src="Images/lr_comparison.png">
 </p>
-
-
+#### Learning Rate Schedules
 
 ## Required packages
 - Python 3.6
