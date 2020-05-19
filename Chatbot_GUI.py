@@ -101,8 +101,8 @@ root.iconphoto(False, img)
 background_label = Label(root, image=img)
 background_label.place(x=0, y=0, relheight=1, relwidth=1)
 
-label = Label(root, text = "This is a chatbot made from bert, pls enter a question below", font=("Arial Bold", 25))
-label.place(x = 50, y = 25)
+label = Label(root, text = "This is a BERT chatbot, pls enter a question below", font=("Arial Bold", 25))
+label.place(x = 95, y = 25)
 
 scibert_button = Button(root, text = "SciBERT answer", font = 40, bg = 'red', command = sci_on)
 scibert_button.place(x=600, y=250)
