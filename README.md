@@ -35,6 +35,7 @@ The following graphs show the performance of our model during training.
 <p align="center">
   <img width="460" height="300" src="Images/lr_comparison.png">
 </p>
+
 #### Learning Rate Schedules
 add graph
 
