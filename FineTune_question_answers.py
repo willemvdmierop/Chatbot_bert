@@ -130,6 +130,9 @@ END_TOKEN = "</S>"
 
 question_data, answer_data = utils.question_answers_dataset()
 
+print("len question data",len(question_data))
+print("len answer data",len(answer_data))
+
 # utils.save_data_csv(question_data,answer_data)
 end = time.time()
 print('Total data preprocessing time is {0:.2f} and the length of the dataset is {1:d}'.format(end - start, len(question_data)))
