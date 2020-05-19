@@ -22,7 +22,7 @@ Three general questions are defined that are applicable for a chatbot; ”who is
 ## Performance of the model 
 The following graphs show the performance of our model during training.
 <p align="center">
-  <img width="560" height="350" src="Images/BERT_100epochs_gradclip_WD001_lr0001.png">
+  <img width="560" height="400" src="Images/BERT_100epochs_gradclip_WD001_lr0001.png">
 </p>
 
 ### Parameter tuning
