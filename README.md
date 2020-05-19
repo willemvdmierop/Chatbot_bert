@@ -1,6 +1,8 @@
-This code was initial developed for the purposes of completing a MSc Coursework assignment
-
 # BERT Chatbot 
+The report of this repo can be found here [report](./DL_Prediction_BERT.pdf).
+(old report update to latest)
+
+
 The BERT Chatbot allows the user to interact with a basic conversational model, as well as understanding when to answer with a more intelligent (trained on scientific papers) model.
 
 ## Required packages
