@@ -36,6 +36,7 @@ The following graphs show the performance of our model during training.
   <img width="460" height="300" src="Images/lr_comparison.png">
 </p>
 #### Learning Rate Schedules
+add graph
 
 ## Required packages
 - Python 3.6
