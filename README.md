@@ -1,5 +1,5 @@
 # BERT Chatbot 
-The report of this repo can be found here [report](./DL_Prediction_BERT.pdf).
+The report of this repo can be found here [[report](./DL_Prediction_BERT.pdf)].
 (old report update to latest)
 
 
