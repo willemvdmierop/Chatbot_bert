@@ -26,7 +26,7 @@ def create_phrases_dict(l):
     return phrases
 
 ### Load lines from movie dialogues
-loaded_lines = load_lines("movie_lines.txt")
+loaded_lines = load_lines("cornell_movie_dialogs_corpus/movie_lines.txt")
 all_lines = create_phrases_dict(loaded_lines)
 
 
@@ -43,7 +43,7 @@ def question_answers_dataset():
     all_movie_lines = all_lines
     questions_dic = []
     answers_dic = []
-    movie_dialogues = load_dialogues("movie_conversations.txt")
+    movie_dialogues = load_dialogues("cornell_movie_dialogs_corpus/movie_conversations.txt")
     ### Iterate through all dialogues
     for idx, dialogue in enumerate(movie_dialogues):
         phrases = dialogue[-1]

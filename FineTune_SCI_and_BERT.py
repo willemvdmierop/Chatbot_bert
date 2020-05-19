@@ -149,7 +149,7 @@ temperature = 1.5
 scorer = BERTScorer(model_type='bert-base-uncased')
 
 ### Load references for potential answers to the three questions used for evaluation
-q_refs = pickle.load(open('Q_refs.pkl', 'rb'))
+q_refs = pickle.load(open('Metrics_files/Q_refs.pkl', 'rb'))
 q3_refs = q_refs['q3_refs']
 q2_refs = q_refs['q2_refs']
 q1_refs = q_refs['q1_refs']
