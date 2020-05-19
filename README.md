@@ -72,7 +72,7 @@ why_refs.txt : text file containing all the answers provided to the question "Wh
 who_is_she_refs.txt : text file containing all the answers provided to the question "Who is she?" from the cornell dataset <br/>
 are_you_okay_refs.txt : text file containing all the answers provided to the question "Are you akoy?" from the cornell dataset <br/>
 
-## Lay-Out Graphical user interface
+## Lay-Out graphical user interface
 <p align="center">
   <img width="300" height="300" src="Images/GUI_Interface.png">
 </p>
