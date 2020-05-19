@@ -16,9 +16,11 @@ if (torch.cuda.is_available()):
 
 PAD, MASK, CLS, SEP = '[PAD]', '[MASK]', '[CLS]', '[SEP]'
 
-
+### Loads the tokenizer and it's parameters into the scope of the generation utilities
 def load_model_tokenizer(model_path = 'bert-base-uncased', tokenizer_path = 'bert-base-uncased', is_path=True):
     global model, tokenizer, mask_id, sep_id, cls_id
+
+    ### The tokenizer can be passed to this method either by file path or as an object
     if is_path:
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
         model = BertForMaskedLM.from_pretrained(model_path)
@@ -28,22 +30,19 @@ def load_model_tokenizer(model_path = 'bert-base-uncased', tokenizer_path = 'ber
     model.eval()
     model = model.to(device)
     params = list(model.named_parameters())
-    #print('The BERT model has {:} different named parameters.\n'.format(len(params)))
-    #print('======= Embedding Layer =======\n')
-    #for p in params[0:5]:
-    #    print("{:<55} {:>12}".format(p[0], str(tuple(p[1].size()))))
     mask_id = tokenizer.convert_tokens_to_ids([MASK])[0]
     sep_id = tokenizer.convert_tokens_to_ids([SEP])[0]
     cls_id = tokenizer.convert_tokens_to_ids([CLS])[0]
 
+### Convert batch of text sentences to token ids
 def tokenize_batch(batch):
     return [tokenizer.convert_tokens_to_ids(sent) for sent in batch]
 
-
+### Convert batch of token ids to tokens
 def untokenize_batch(batch):
     return [tokenizer.convert_ids_to_tokens(sent) for sent in batch]
 
-
+### Convert tokens to readable text
 def detokenize(sent):
     new_sent = []
     for i, token in enumerate(sent):
@@ -53,6 +52,7 @@ def detokenize(sent):
             new_sent.append(token)
     return new_sent
 
+### Generate single word at position gen_idx+1
 def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_list=True):
     """ Generate a word from from out[gen_idx]
     
@@ -66,13 +66,12 @@ def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_
     https://towardsdatascience.com/how-to-sample-from-language-models-682bceb97277
 
   """
-    # print(out.shape)
     logits = out[:, gen_idx]
     if temperature is not None:
         logits = logits / temperature
     if top_k > 0:
         kth_vals, kth_idx = logits.topk(top_k,
-                                        dim=1)  # topk is a torch method that returns the k largest element, in this case top_k = k
+                                        dim=1)
         dist = torch.distributions.categorical.Categorical(logits=kth_vals)
         idx = kth_idx.gather(dim=1, index=dist.sample().unsqueeze(-1)).squeeze(-1)
     elif sample:
@@ -82,19 +81,18 @@ def generate_step(out, gen_idx, temperature=None, top_k=0, sample=False, return_
         idx = torch.argmax(logits, dim=-1)
     return idx.tolist() if return_list else idx
 
-
+### Format given seed text with special characters and masked padding up to max length
 def get_init_text(seed_text, max_len, batch_size=1, rand_init=False):
-    # get initial sentence by padding seed_text with either masks or random words to max_len
     batch = [[CLS] + seed_text + [SEP] +  [MASK] * max_len + [SEP] for _ in range(batch_size)]
     return tokenize_batch(batch)
 
-
+### Output text in a readable format
 def printer(sent, should_detokenize=True):
     if should_detokenize:
-        sent = detokenize(sent) # [CLS] and [SEP] don't need to be detokenized
+        sent = detokenize(sent)
     print(" ".join(sent))
 
-
+### Generate text in a sequential (right to left) context one word at a time
 def sequential_generation(seed_text, batch_size=10, max_len=15, leed_out_len=15,
                           top_k=0, temperature=None, sample=False, cuda=True):
     seed_len = len(seed_text)+2
@@ -111,12 +109,11 @@ def sequential_generation(seed_text, batch_size=10, max_len=15, leed_out_len=15,
 
     return untokenize_batch(batch), batch
 
-
+### Generate text for a random position of the masked sequence until all words are generated
 def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0, temperature=None, max_iter=300,
                                    burnin=200,
                                    cuda=False, print_every=10, verbose=True):
     """ Generate for one random position at a timestep
-
     args:
         - burnin: during burn-in period, sample from full distribution; afterwards take argmax
     """
@@ -142,29 +139,11 @@ def parallel_sequential_generation(seed_text, batch_size=10, max_len=15, top_k=0
 
     return untokenize_batch(batch), batch
 
-'''
-def generate_text(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
-                  sample=False, top_k=100, temperature=1.0, cuda=True, print_every=1):
-    sentences = []
-    n_batches = math.ceil(n_samples / batch_size)
-    start_time = time.time()
-    for batch_n in range(n_batches):
-        batch = sequential_generation(seed_text, batch_size=batch_size, max_len=max_len, top_k=top_k,
-                                      temperature=temperature, leed_out_len=leed_out_len, sample=sample,
-                                      cuda=cuda)
-
-        if (batch_n + 1) % print_every == 0:
-            # print("Finished batch %d in %.3fs" % (batch_n + 1, time.time() - start_time))
-            start_time = time.time()
-        sentences += batch
-    return sentences
-
-'''
+### Wrapper method to generate text given a phrase (seed_text), and generation parameters
 def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
              generation_mode="parallel-sequential",
              sample=True, top_k=100, temperature=1.0, burnin=200, max_iter=500,
              cuda=False, print_every=1):
-    # main generation function to call
     sentences = []
     n_batches = math.ceil(n_samples / batch_size)
     start_time = time.time()
@@ -177,25 +156,25 @@ def generate(n_samples, seed_text="[CLS]", batch_size=10, max_len=25,
             batch = sequential_generation(seed_text, batch_size=batch_size, max_len=max_len, top_k=top_k,
                                           temperature=temperature, sample=sample,
                                           cuda=cuda)
+        
         if (batch_n + 1) % print_every == 0:
             print("Finished batch %d in %.3f minutes" % (batch_n + 1, (time.time() - start_time)/60))
             start_time = time.time()
-
         sentences += batch
     return sentences
 
-
+### Calculate BLEU score of a batch of sentences using the batch as references
 def self_bleu(sents):
     return bleu.corpus_bleu([[s for (j, s) in enumerate(sents) if j != i] for i in range(len(sents))], sents)
 
-
+### Caluclate the number of n-grams (n: 1-4) in the batch of sentences
 def get_ngram_counts(sents, max_n=4):
     size2count = {}
     for i in range(1, max_n + 1):
         size2count[i] = Counter([n for sent in sents for n in ngrams(sent, i)])
     return size2count
 
-
+### Calculate unique n-grams (n: 1-4) in batch of sentences
 def self_unique_ngrams(preds, max_n=4):
     # get # of pred ngrams with count 1
     pct_unique = {}
@@ -205,23 +184,3 @@ def self_unique_ngrams(preds, max_n=4):
         total = sum(pred_ngrams[i].values())
         pct_unique[i] = n_unique / total
     return pct_unique
-
-'''
-load_model_tokenizer(model_path='bert-base-uncased',tokenizer_path='bert-base-uncased')
-
-with open('simp_cornell_vocab.txt', 'r') as f:
-   cornell_vocab = [word.rstrip('\n') for word in f]
-num_unk = 0
-tokenized_cornell = []
-for w in cornell_vocab:
-    tokenized_cornell.append(tokenizer.tokenize(w))
-
-
-toks_batch = tokenize_batch(tokenized_cornell)
-for idx, tok in enumerate(toks_batch):
-    word = cornell_vocab[idx]
-    t = tokenized_cornell[idx]
-    if tokenizer.unk_token_id in tok: num_unk += 1
-#print(untokenize_batch(tok))
-print(num_unk)
-'''
