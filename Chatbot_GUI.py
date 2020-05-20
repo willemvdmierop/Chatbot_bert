@@ -46,7 +46,7 @@ def sci_on():
     sci_global = True
     label_sci_on = Label(root, text="SciBERT = ON", font=("Arial Bold", 20), bg='red')
     label_sci_on.place(x=320, y=280)
-    
+
 def sci_off():
     global sci_global
     global label_sci_on
@@ -95,6 +95,9 @@ def Enter():
         all_tokens = ugen.tokenizer.convert_ids_to_tokens(input_ids)
         answer = ' '.join(all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1])
         print(f'The answer according to modelForQuestionAnswering is: "{answer}"')
+        for i,value in enumerate(answer.split()):
+            if value == '[SEP]' or value == '[CLS]':
+                answer = answer.replace(value, '')
         if len(answer) > 0:
             print(input_text + ' ' + answer)
             done = True
