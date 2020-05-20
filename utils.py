@@ -111,7 +111,8 @@ def return_metrics(scorer, refs, seed_text, n_samples, max_len =20, top_k=50, te
                                                     top_k=top_k, temperature=temperature, cuda=cuda,
                                                     leed_out_len=len(seed_text))
 
-    ### Iterate through batch of generated sequences and evaluate                                                
+
+    ### Iterate through batch of generated sequences and evaluate
     for b in batch:
         if print_sent:
             print(ugen.tokenizer.decode(b))

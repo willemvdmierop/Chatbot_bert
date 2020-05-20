@@ -43,7 +43,7 @@ sample = True
 max_iter = 500
 question = 2
 ModelForQ_A_on = True
-Metrics_calculation = False
+Metrics_calculation = True
 
 #========================================== BERTScorer initialisation ==================================================
 Q_metrics = [[],[],[]]
@@ -72,7 +72,7 @@ if Metrics_calculation:
 
 
     metrics = {'q_metrics': Q_metrics} #{'q1_metrics': Q1_metrics 'q2_metrics': Q2_metrics, 'q3_metrics': Q3_metrics}
-    torch.save(metrics, os.path.join(os.getcwd(),'metrics_sci_benchmark.pkl'))
+    torch.save(metrics, os.path.join(os.getcwd(),'metrics_with_modelforQA.pkl'))
 
 #sci_tokenizer = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', do_lower_case=True)
 ##vocab_sci = sci_tokenizer.get_vocab()
