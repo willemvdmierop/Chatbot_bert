@@ -37,7 +37,11 @@ sample = True
 max_iter = 500
 ModelForQ_A_on = True
 Metrics_calculation = False
+device = 'cpu'
 cuda = False
+if (torch.cuda.is_available()):
+    device = torch.device('cuda')
+    cuda = True
 
 sci_global = False
 def sci_on():
