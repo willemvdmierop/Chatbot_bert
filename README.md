@@ -9,6 +9,10 @@ We [fine-tune](./FineTune_SCI_and_BERT.py) the BertForMaskedLM model, this model
 ## Word Generation
 For the purposes of a conversational interface, we are required to generate text in a causal manner (left to right), and as BERT is bi-directional, it is not inherently able generate text in this way. For this reason, we implemented a similar method as explained in ”BERT has a Mouth, and It Must Speak: BERT as a Markov Random Field Language Model” (Wang and Cho 2019). With this method we add a [CLS] at the front of the input text, which is necessary as an input to BERT. Then we add a [SEP] showing the end of our question, after that we create mask tokens until the predefined maximum length of the phrase, a maximum length of 40 is chosen for our implementation. Finally at the end of the input phrase a [SEP]
 
+<p align="center">
+  <img width="650" src="Images/BERT_word_generation.png">
+</p>
+
 ## Dataset
 The dataset used for fine-tuning is the Cornell Movie-Quotes Corpus that contains conversations form raw movie scripts. This repo only uses the [movie_lines.txt](./cornell_movie_dialogs_corpus/movie_lines.txt) and the [movie_conversations.txt](./cornell_movie_dialogs_corpus/movie_conversations.txt) files during training. The [movie_lines.txt](./cornell_movie_dialogs_corpus/movie_lines.txt) dataset contains the line-id, the character-id, the movie-id, the character-name and the text. The [movie_conversations.txt](./cornell_movie_dialogs_corpus/movie_conversations.txt) contains the different line-ids of text from a particular conversation as a sequence of dialogue lines.
 
