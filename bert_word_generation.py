@@ -122,6 +122,7 @@ if ModelForQ_A_on:
             start_scores, end_scores = modelForQuestionAnswering(torch.tensor([input_ids]), token_type_ids=torch.tensor([token_type_ids]))
             print("\nQuestion: ", question, "\nAnswer:", text)
             all_tokens = ugen.tokenizer.convert_ids_to_tokens(input_ids)
+            print(answer)
             answer = ' '.join(all_tokens[torch.argmax(start_scores): torch.argmax(end_scores) + 1])
             print(f'The answer according to modelForQuestionAnswering is: "{answer}"')
             if len(answer) > 0:
