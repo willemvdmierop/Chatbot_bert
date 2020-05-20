@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 metrics1 = torch.load("Metrics/metrics_65epochs_gradientclipping_WD001_lr0001.pkl")
-metrics2 = torch.load("Metrics/metrics_par_opt_lr001")
+metrics2 = torch.load("Metrics/metrics_lr001_wd001")
 metrics3 = torch.load("Metrics/metrics_par_opt_lr00001")
 #metrics4 = torch.load("Metrics/metrics_WD00001_lr001_grad_clip_nosched.pkl")
 stop = 100
@@ -29,13 +29,13 @@ df_q11 = pd.DataFrame(Q1_metrics1).loc[:2519]
 df_q21 = pd.DataFrame(Q2_metrics1).loc[:2519]
 df_q31 = pd.DataFrame(Q3_metrics1).loc[:2519]
 
-df_q12 = pd.DataFrame(Q1_metrics2)
-df_q22 = pd.DataFrame(Q2_metrics2)
-df_q32 = pd.DataFrame(Q3_metrics2)
+df_q12 = pd.DataFrame(Q1_metrics2).loc[:2519]
+df_q22 = pd.DataFrame(Q2_metrics2).loc[:2519]
+df_q32 = pd.DataFrame(Q3_metrics2).loc[:2519]
 
-df_q13 = pd.DataFrame(Q1_metrics3)
-df_q23 = pd.DataFrame(Q2_metrics3)
-df_q33 = pd.DataFrame(Q3_metrics3)
+df_q13 = pd.DataFrame(Q1_metrics3).loc[:2519]
+df_q23 = pd.DataFrame(Q2_metrics3).loc[:2519]
+df_q33 = pd.DataFrame(Q3_metrics3).loc[:2519]
 
 #df_q14 = pd.DataFrame(Q1_metrics4)
 #df_q24 = pd.DataFrame(Q2_metrics4)
