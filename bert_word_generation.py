@@ -48,7 +48,7 @@ Metrics_calculation = False
 #========================================== BERTScorer initialisation ==================================================
 Q_metrics = [[],[],[]]
 scorer = BERTScorer(model_type='bert-base-uncased')
-q_refs = pickle.load(open('Q_refs.pkl', 'rb'))
+q_refs = pickle.load(open('Metrics_files/Q_refs.pkl', 'rb'))
 q3_refs = q_refs['q3_refs']
 q2_refs = q_refs['q2_refs']
 q1_refs = q_refs['q1_refs']
