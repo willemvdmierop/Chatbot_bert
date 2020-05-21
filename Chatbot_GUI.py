@@ -16,11 +16,11 @@ canvas = Canvas(root, height=HEIGHT, width=WIDTH)
 canvas.pack()
 # =================================================== Model Loading ====================================================
 
-model_path_BERT = 'bert-base-uncased'
-tokenizer_path_BERT = 'bert-base-uncased'
+model_path_BERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
+tokenizer_path_BERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
 
-model_path_SCIBERT = 'allenai/scibert_scivocab_uncased'
-tokenizer_path_SCIBERT = 'allenai/scibert_scivocab_uncased'
+model_path_SCIBERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
+tokenizer_path_SCIBERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
 
 ugen.load_model_tokenizer(model_path=model_path_BERT, tokenizer_path=tokenizer_path_BERT)
 modelForQuestionAnswering = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
