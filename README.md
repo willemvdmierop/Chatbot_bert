@@ -56,6 +56,7 @@ The following table show the text that are models are able to generate.
 - panda
 - pickle
 - Tensorflow
+- readability 0.3.1
 
 ## Usage
 To run the interface:
