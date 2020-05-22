@@ -1,6 +1,5 @@
 # BERT Chatbot 
-The report of this repo can be found here [[report](./DL_Prediction_BERT.pdf)].
-(old report update to latest)
+The report of this repo can be found here [[report](./BERT-chatbot.pdf)].
 
 This repo introduces a BERT Chatbot that is fine-tuned with Cornell Movie-Quotes Corpus to generate answers with a basic conversational model, as well as understanding when to answer with a more intelligent (trained on scientific papers) model.
 ## Model
@@ -42,7 +41,7 @@ Three general questions are defined that are applicable for a chatbot; ”who is
 </p>
 
 ## Performance of the model 
-The following graphs show the performance of our model during training.
+The following table show the text that are models are able to generate.
 <p align="center">
   <img width="900"src="Images/Word_generation_final_models.png">
 </p>
