@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-metrics = torch.load("Metrics/metrics_SCIBERT_lr001.pkl")
+metrics = torch.load("Metrics/metrics_SCIBERT_lr001_wd0001_FINAL.pkl")
 Q_metrics = metrics['q_metrics']
 stop = 100
 single_plots = False
@@ -17,7 +17,8 @@ df_q3 = pd.DataFrame(Q3_metrics)
 #df_q1.to_csv("Q1-test.csv")
 print(df_q1[0])
 window = 20
-x = np.linspace(start = 0, stop = 81, num= 3402)
+stop = 100
+x = np.linspace(start = 0, stop = stop, num= stop*42)
 print(x)
 print(x.shape)
 

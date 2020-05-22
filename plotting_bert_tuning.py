@@ -11,7 +11,7 @@ Q2_metrics = Gen_metrics[1]
 Q3_metrics = Gen_metrics[2]
 table = []
 import xlsxwriter
-workbook = xlsxwriter.Workbook('WordGeneration_parameters.xlsx')
+workbook = xlsxwriter.Workbook('WordGeneration_parameters_fineTuned.xlsx')
 worksheet = workbook.add_worksheet()
 row = 0
 col = 0
@@ -29,7 +29,7 @@ for i in range(len(Q1_metrics)):
 workbook.close()
 
 df = pd.DataFrame(table)
-df.to_csv("table_word_gen.csv")
+df.to_csv("table_word_gen_fineTuned.csv")
 print(table)
 
 
