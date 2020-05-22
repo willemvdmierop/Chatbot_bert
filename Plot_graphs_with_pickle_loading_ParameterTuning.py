@@ -67,7 +67,7 @@ else:
 
     ax[0].plot(x,df_q11[0].rolling(window).mean(), color = 'red', label = 'BLEU score')
     ax[0].plot(x,df_q12[0].rolling(window).mean(), color = 'yellow',label = 'BLEU score Cosine Warmup')
-    ax[0].plot(x,df_q13[0].rolling(window).mean(), color = 'blue', label = 'BLEU score Cosine Hard restarts')
+    ax[0].plot(x,df_q13[0].rolling(window).mean(), color = 'blue', label = 'BLEU score Cosine Hard Restarts')
     #ax[0].plot(x,df_q14[0].rolling(window).mean(), color = 'cyan', label = 'BLEU score WD 0.00001')
     #ax[0].plot(x,df_q1[1].rolling(window).mean(), label = 'Precision')
     #ax[0].plot(x,df_q1[2].rolling(window).mean(), label = 'Recal')
@@ -79,7 +79,7 @@ else:
 
     ax[1].plot(x,df_q21[0].rolling(window).mean(), color = 'red', label = 'BLEU score')
     ax[1].plot(x,df_q22[0].rolling(window).mean(), color = 'yellow', label = 'BLEU score Cosine Warmup')
-    ax[1].plot(x,df_q23[0].rolling(window).mean(), color = 'blue', label = 'BLEU score  Cosine Hard restarts')
+    ax[1].plot(x,df_q23[0].rolling(window).mean(), color = 'blue', label = 'BLEU score  Cosine Hard Restarts')
     #ax[1].plot(x,df_q24[0].rolling(window).mean(), color = 'cyan', label = 'BLEU score WD 0.00001')
     #ax[1].plot(x,df_q2[1].rolling(window).mean(), label = 'Precision')
     #ax[1].plot(x,df_q2[2].rolling(window).mean(), label = 'Recal')
@@ -91,7 +91,7 @@ else:
 
     ax[2].plot(x,df_q31[0].rolling(window).mean(), color = 'red', label = 'BLEU score')
     ax[2].plot(x,df_q32[0].rolling(window).mean(), color = 'yellow', label = 'BLEU score Cosine Warmup')
-    ax[2].plot(x,df_q33[0].rolling(window).mean(), color = 'blue', label = 'BLEU score  Cosine Hard restarts')
+    ax[2].plot(x,df_q33[0].rolling(window).mean(), color = 'blue', label = 'BLEU score  Cosine Hard Restarts')
     #ax[2].plot(x,df_q34[0].rolling(window).mean(), color = 'cyan', label = 'BLEU score WD 0.00001')
     #ax[2].plot(x,df_q2[1].rolling(window).mean(), label = 'Precision')
     #ax[2].plot(x,df_q2[2].rolling(window).mean(), label = 'Recal')
