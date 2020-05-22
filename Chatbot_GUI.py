@@ -22,6 +22,8 @@ tokenizer_path_BERT = 'Models_for_GUI/model_bert_lr0001_wd001_batch200_ep100_mPl
 model_path_SCIBERT = 'Models_for_GUI/model_scibert_lr001_wd0001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
 tokenizer_path_SCIBERT = 'Models_for_GUI/model_scibert_lr001_wd0001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
 
+
+
 ugen.load_model_tokenizer(model_path=model_path_BERT, tokenizer_path=tokenizer_path_BERT)
 modelForQuestionAnswering = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')
 #===================================== Hyperparameters for generation ==================================================
@@ -59,6 +61,8 @@ def Enter():
     global label_answer
     global label_sci_on
     global label_sci_answer
+    global top_k
+    global temperature
     label_answer.destroy()
     if not sci_global:
         sci_answer = False
@@ -120,7 +124,6 @@ def Enter():
     answer_str.set(answer)
     label_answer = Label(output_frame, textvariable=answer_str, font=40, bg="#00d2ff")
     label_answer.place(relx=0.2, rely=0.35)
-    answer = str()
 
 #================================================== Tkinter ============================================================
 img = ImageTk.PhotoImage(Image.open("/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/images/City_logo.jpg"))
