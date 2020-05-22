@@ -9,8 +9,8 @@ import pickle
 import numpy as np
 
 
-tokenizer = BertTokenizer.from_pretrained('/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_100_WithGrad_clip/model_bert_lr0001_wd001_batch200_ep100_mPlenght40_tmp', do_lower_case=True)
-model_Q_A = BertForMaskedLM.from_pretrained('/Users/willemvandemierop/Google Drive/DL Prediction (706)/BERT_100_WithGrad_clip/model_bert_lr0001_wd001_batch200_ep100_mPlenght40_tmp')
+tokenizer = BertTokenizer.from_pretrained('/Users/willemvandemierop/Google Drive/DL Prediction (706)/model_scibert_lr001_wd0001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final', do_lower_case=True)
+model_Q_A = BertForMaskedLM.from_pretrained('/Users/willemvandemierop/Google Drive/DL Prediction (706)/model_scibert_lr001_wd0001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final')
 
 n_samples = 10
 max_len = 20
@@ -42,7 +42,7 @@ for temperature in temp:
                                                   n_samples=n_samples, top_k=top_k,
                                                   temperature=temperature, max_len=max_len, cuda=cuda)
             metrics[i].append([temperature, top_k, bleu, P, R, F1])
-
+    print('temperature', temperature)
 
 final_metrics = {'gen_metrics': metrics}
 torch.save(final_metrics, "word_gen_metrics.pkl")

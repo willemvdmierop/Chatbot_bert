@@ -28,13 +28,8 @@ modelForQuestionAnswering = BertForQuestionAnswering.from_pretrained('bert-large
 n_samples = 1
 batch_size = 2
 max_len = 20
-top_k = 50
+top_k = 80
 temperature = 1.5
-generation_mode = "parallel-sequential"
-leed_out_len = 5 # max_len
-burnin = 250
-sample = True
-max_iter = 500
 ModelForQ_A_on = True
 Metrics_calculation = False
 device = 'cpu'
@@ -77,9 +72,13 @@ def Enter():
     print("\nLix score of question",
           readability.getmeasures(seed_text, lang='en')['readability grades']['LIX'])
 
-    if readability.getmeasures(seed_text, lang='en')['readability grades']['FleschReadingEase'] < 80:
+
+    ## a score lower than 50 suggest that the passage is college level
+    if readability.getmeasures(seed_text, lang='en')['readability grades']['FleschReadingEase'] < 50:
         print('\nHold on let me get an expert to help you with your question!')
         ugen.load_model_tokenizer(model_path=model_path_SCIBERT, tokenizer_path=tokenizer_path_SCIBERT)
+        top_k = 50
+        temperature = 1.5
         sci_answer = True
     elif not sci_global:
         sci_answer = False
