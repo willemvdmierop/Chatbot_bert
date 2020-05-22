@@ -23,25 +23,30 @@ During training we keep track of the performance of the model using BertScore an
 
 Three general questions are defined that are applicable for a chatbot; ”who is she?”, ”Are you okay?” and ”Why?”. For each of these questions a F1 score is calculated compared to the questions that are available in our questions dataset of the phrase pairs. If the question in the dataset has a F1 score higher than 0.9 this question can be seen as similar to our chosen question and the index is stored. From these indexes we then generate a dataset of answers, this dataset will be used as a reference to possible answers that the chatbot could generate for our question.
 
-## Performance of the model 
-The following graphs show the performance of our model during training.
-<p align="center">
-  <img width="650" height="500" src="Images/BERT_100epochs_gradclip_WD001_lr0001.png">
-</p>
+
 
 ### Parameter tuning
 #### Weight Decay
 <p align="center">
-  <img width="560" height="350" src="Images/Parametertuning_WD.png">
+  <img width="560" height="350" src="Images/WD_parameterTuning.png">
 </p>
 
 #### Learning Rate
 <p align="center">
-  <img width="560" height="350" src="Images/lr_comparison.png">
+  <img width="560" height="350" src="Images/LR_parameterTuning.png">
 </p>
 
 #### Learning Rate Schedules
-add graph
+<p align="center">
+  <img width="560" height="350" src="Images/LR_Schedules.png">
+</p>
+
+## Performance of the model 
+The following graphs show the performance of our model during training.
+<p align="center">
+  <img width="900"src="Images/Word_generation_final_models.png">
+</p>
+
 
 ## Required packages
 - Python 3.6
