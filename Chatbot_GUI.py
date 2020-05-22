@@ -126,7 +126,7 @@ def Enter():
     label_answer.place(relx=0.2, rely=0.35)
 
 #================================================== Tkinter ============================================================
-img = ImageTk.PhotoImage(Image.open("/Users/willemvandemierop/Documents/Master AI/Pycharm/Chatbot_bert/images/City_logo.jpg"))
+img = ImageTk.PhotoImage(Image.open("Images/City_logo.jpg"))
 root.iconphoto(False, img)
 background_label = Label(root, image=img)
 background_label.place(x=0, y=0, relheight=1, relwidth=1)
