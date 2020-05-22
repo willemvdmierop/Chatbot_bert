@@ -59,7 +59,9 @@ The following table show the text that are models are able to generate.
 - readability 0.3.1
 
 ## Usage
-To run the interface:
+To run the interface the weights of the model first need to be downloaded here: https://drive.google.com/drive/folders/1gjx9XWsCNlbEe7dA5f3Phg3ZUZfgdsM_?usp=sharing
+
+After that the model can be run with:
 ```
 python3.6 Chatbot_GUI.py
 ```
