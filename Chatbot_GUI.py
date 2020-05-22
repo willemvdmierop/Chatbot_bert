@@ -77,8 +77,8 @@ def Enter():
     if readability.getmeasures(seed_text, lang='en')['readability grades']['FleschReadingEase'] < 50:
         print('\nHold on let me get an expert to help you with your question!')
         ugen.load_model_tokenizer(model_path=model_path_SCIBERT, tokenizer_path=tokenizer_path_SCIBERT)
-        top_k = 50
-        temperature = 1.5
+        top_k = 120
+        temperature = 4
         sci_answer = True
     elif not sci_global:
         sci_answer = False
