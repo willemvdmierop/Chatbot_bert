@@ -44,7 +44,7 @@ Three general questions are defined that are applicable for a chatbot; ”who is
 ## Performance of the model 
 The following graphs show the performance of our model during training.
 <p align="center">
-  <img width="650" height="500" src="Images/Word_generation_final_models.png">
+  <img width="900"src="Images/Word_generation_final_models.png">
 </p>
 
 
