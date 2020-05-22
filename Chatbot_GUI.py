@@ -16,11 +16,11 @@ canvas = Canvas(root, height=HEIGHT, width=WIDTH)
 canvas.pack()
 # =================================================== Model Loading ====================================================
 
-model_path_BERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
-tokenizer_path_BERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
+model_path_BERT = 'Models_for_GUI/model_bert_lr0001_wd001_batch200_ep100_mPlenght40_tmp'
+tokenizer_path_BERT = 'Models_for_GUI/model_bert_lr0001_wd001_batch200_ep100_mPlenght40_tmp'
 
-model_path_SCIBERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
-tokenizer_path_SCIBERT = 'Checkpoints/model_scibert_lr0001_wd001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
+model_path_SCIBERT = 'Models_for_GUI/model_scibert_lr001_wd0001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
+tokenizer_path_SCIBERT = 'Models_for_GUI/model_scibert_lr001_wd0001_batch200_ep100_mPlenght40_grad_clip_True_Schedule_False_final'
 
 ugen.load_model_tokenizer(model_path=model_path_BERT, tokenizer_path=tokenizer_path_BERT)
 modelForQuestionAnswering = BertForQuestionAnswering.from_pretrained('bert-large-uncased-whole-word-masking-finetuned-squad')

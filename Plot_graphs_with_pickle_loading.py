@@ -3,9 +3,9 @@ import torch
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-metrics = torch.load("Metrics/metrics_WD001_lr0001_gradclip_100epochs.pkl")
+metrics = torch.load("Metrics/metrics_SCIBERT_lr001_wd0001_FINAL.pkl")
 Q_metrics = metrics['q_metrics']
-single_plots = True
+single_plots = False
 Q1_metrics = Q_metrics[0]
 Q2_metrics = Q_metrics[1]
 Q3_metrics = Q_metrics[2]
