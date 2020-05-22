@@ -44,8 +44,7 @@ epochs = 60
 max_grad_norm = 1.0
 
 ### Training with Scibert (True) of with original Bert (False) ###
-scibert_train = False 
-arxiv_train = False 
+scibert_train = False  
 
 ### Choose to apply gradient clipping or learning rate schedules
 Gradient_clipping_on = True 
@@ -59,9 +58,6 @@ Schedule_ON = False
 if scibert_train:
     dirname = 'model_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
     lossname = 'loss_scibert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
-elif arxiv_train:
-    dirname = 'model_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
-    lossname = 'loss_arxiv_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
 else:
     dirname = 'model_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
     lossname = 'loss_bert_lr' + lrate_str + '_wd' + w_decay_str + '_batch' + str(minibatch_size) + '_ep' + str(epochs) + '_mPlenght' + str(max_phrase_length) + '_grad_clip_' + str(Gradient_clipping_on) + '_Schedule_' + str(Schedule_ON)
@@ -83,17 +79,12 @@ if os.path.exists(os.path.join(dirname, 'pytorch_model.bin')) and os.path.exists
     print("Attention we are initializing the model with an already trained tokenizer from dir: {}!".format(dirname))
     tokenizer = BertTokenizer.from_pretrained(dirname, do_lower_case=True)
     model_Q_A = BertForMaskedLM.from_pretrained(dirname)
-### Load pre-trained model (bert/scibert/arxiv) to fine-tune
 else:
     if not os.path.exists(dirname): os.mkdir(dirname)    
     if scibert_train:
         print("Attention we are initializing the scibert model with scibert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', do_lower_case=True)
         model_Q_A = BertForMaskedLM.from_pretrained('allenai/scibert_scivocab_uncased')
-    elif arxiv_train:
-        print("Attention we are initializing the arxiv model with arxiv tokenizer!")
-        tokenizer = BertTokenizer.from_pretrained('lysandre/arxiv', do_lower_case=True)
-        model_Q_A = BertForMaskedLM.from_pretrained('lysandre/arxiv')
     else:
         print("Attention we are initializing the bert model with bert tokenizer!")
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
